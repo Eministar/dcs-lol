@@ -1,0 +1,25 @@
+# Nixpacks configuration for building the Vite frontend and starting the Express backend
+
+[variables]
+PORT = "3000"
+NODE_ENV = "production"
+
+[phases.setup]
+# Ensure a modern Node is available during build/runtime
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+# Install deps including devDependencies needed for Vite build
+cmds = [
+  "npm install --include=dev"
+]
+
+[phases.build]
+# Build the React app into /dist (Vite default)
+cmds = [
+  "npm run build"
+]
+
+[start]
+# Single process: main Express app serves API + uploads + static dist
+cmd = "node backend/index.cjs"

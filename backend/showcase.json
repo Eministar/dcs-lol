@@ -1,0 +1,88 @@
+[
+  [
+    {
+      "id": "e156fcd3-7350-46f8-8ad2-9e882fd18dc5",
+      "name": "LokroGames",
+      "description": "**LokroGames** ist ein Server der so einiges kann... Komm drauf und sieh selbst!",
+      "inviteLink": "dcs.lol/lokrogames",
+      "category": "Gaming",
+      "tags": [
+        "kompetenz",
+        "freundlich",
+        "jugenfreundlich"
+      ],
+      "verified": false,
+      "featured": false,
+      "logoUrl": "/backend/uploads/e156fcd3-7350-46f8-8ad2-9e882fd18dc5.webp",
+      "createdAt": "2025-09-26T18:39:02.873Z"
+    },
+    {
+      "id": "702c3a7f-899d-4b40-bdab-c49e69bcacea",
+      "name": ".gg/deutschland || Gemeinschaft",
+      "description": "Der deutscheste Server auf ganz dcs.lol. Hilf uns unser Ziel, den discord.gg/deutschland Invitelink zu bekommen! Wir brauchen Leute wie dich, um unsere Community zu vergrößern. Gemeinsam zum Ziel, .gg/deutschland",
+      "inviteLink": "dcs.lol/deutschland",
+      "category": "Community",
+      "tags": [
+        "deutsch",
+        "de",
+        "allmann",
+        "Klischee"
+      ],
+      "verified": false,
+      "featured": false,
+      "logoUrl": "/backend/uploads/702c3a7f-899d-4b40-bdab-c49e69bcacea.webp",
+      "createdAt": "2025-09-24T14:51:11.276Z"
+    },
+    {
+      "id": "a30d48b0-e323-466c-a9ea-2cf9e1ac2c9d",
+      "name": "LokroGaming",
+      "description": "Community Server voll mit Überraschungen. Finde Freunde und sei ein Teil der Community. Das ist unteranderem auch der Server des Tiktok-Streamers ReuFnR und des Hobby Dev Lokrogamer. ",
+      "inviteLink": "dcs.lol/lokrogaming",
+      "category": "Gaming",
+      "tags": [
+        "Gaming",
+        "german",
+        "social",
+        "child-friendly"
+      ],
+      "verified": true,
+      "featured": false,
+      "logoUrl": "/backend/uploads/a30d48b0-e323-466c-a9ea-2cf9e1ac2c9d.webp",
+      "createdAt": "2025-06-20T12:57:24.761Z"
+    },
+    {
+      "id": "7ef414f2-af46-44c4-aa36-a5881fb7fb10",
+      "name": "Bündnis Kevin Teller",
+      "description": "**BKT** – Das Bündnis Kevin Teller ist die einzig wahre Spaßpartei im Internet. Satirisch, laut und ehrlich. Wir liefern Memes, Meinung & Maximalkontrast zu langweiligen Parteien. Join uns auf der Schiene des Wahnsinns!\r\n",
+      "inviteLink": "dcs.lol/bkt",
+      "category": "Community",
+      "tags": [
+        "Partner",
+        "BKT",
+        "Playing",
+        "Events"
+      ],
+      "verified": true,
+      "featured": true,
+      "logoUrl": "/backend/uploads/7ef414f2-af46-44c4-aa36-a5881fb7fb10.webp",
+      "createdAt": "2025-06-12T15:16:18.762Z"
+    },
+    {
+      "id": "6e6cba7c-afd3-4b8e-9fdb-19cd85e07823",
+      "name": "YukiCraft.net",
+      "description": "**YukiCraft** ist ein innovatives Minecraft-Netzwerk mit Fokus auf eigenen Welten, einzigartigen Gamemodes & Community-Funktionen. Spieler können Welten hosten, voten & die besten Server entdecken – alles mit Stil und Power.\r\n",
+      "inviteLink": "dcs.lol/yuki",
+      "category": "Gaming",
+      "tags": [
+        "Partner",
+        "Minecraft",
+        "CityBuild",
+        "SMP"
+      ],
+      "verified": true,
+      "featured": true,
+      "logoUrl": "https://dcs.lol/backend/uploads/6e6cba7c-afd3-4b8e-9fdb-19cd85e07823.webp",
+      "createdAt": "2025-06-12T14:55:27.678Z"
+    }
+  ]
+]

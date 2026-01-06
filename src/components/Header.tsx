@@ -14,13 +14,8 @@ export const Header: React.FC = () => {
         const raw = (user.avatar || "").trim();
         if (!raw) return fallback;
 
-        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-
-        const id = user.id;
-        if (!id) return fallback;
-
-        const ext = raw.startsWith("a_") ? "gif" : "png";
-        return `https://cdn.discordapp.com/avatars/${id}/${raw}.${ext}?size=128`;
+        // Backend liefert bereits die volle CDN-URL
+        return raw;
     }, [user]);
 
     const scrollTo = (id: string) => {
@@ -75,7 +70,11 @@ export const Header: React.FC = () => {
                                         loading="lazy"
                                         decoding="async"
                                         onError={(e) => {
-                                            (e.currentTarget as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                            const img = e.currentTarget as HTMLImageElement;
+                                            const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                            if (img.src !== fallback) {
+                                                img.src = fallback;
+                                            }
                                         }}
                                     />
                                     <button
@@ -128,6 +127,24 @@ export const Header: React.FC = () => {
                             </button>
                             {user ? (
                                 <>
+                                    <div className="flex items-center gap-3 py-2 border-b border-border/50">
+                                        <img
+                                            src={avatarUrl}
+                                            alt={user.username}
+                                            className="w-8 h-8 rounded-full ring-2 ring-primary/40 bg-card object-cover"
+                                            referrerPolicy="no-referrer"
+                                            crossOrigin="anonymous"
+                                            loading="lazy"
+                                            onError={(e) => {
+                                                const img = e.currentTarget as HTMLImageElement;
+                                                const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                                if (img.src !== fallback) {
+                                                    img.src = fallback;
+                                                }
+                                            }}
+                                        />
+                                        <span className="text-foreground font-medium">{user.username}</span>
+                                    </div>
                                     <RLink to="/edit" onClick={() => setMenuOpen(false)}
                                            className="text-foreground font-medium py-2">
                                         Meine Links

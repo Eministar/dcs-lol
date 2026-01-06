@@ -107,21 +107,14 @@ const Edit: React.FC = () => {
     };
 
     const getAvatarUrl = () => {
-        // Unterstützt sowohl vollständige URL als auch Discord avatar-hash
+        // Backend liefert bereits die volle CDN-URL
         const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
         if (!user) return fallback;
 
         const raw = (user.avatar || "").trim();
         if (!raw) return fallback;
 
-        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
-
-        const id = user.id;
-        if (!id) return fallback;
-
-        // Discord CDN: GIF wenn animiert, sonst PNG
-        const ext = raw.startsWith("a_") ? "gif" : "png";
-        return `https://cdn.discordapp.com/avatars/${id}/${raw}.${ext}?size=128`;
+        return raw;
     };
 
     if (loading) {
@@ -194,7 +187,11 @@ const Edit: React.FC = () => {
                             loading="lazy"
                             decoding="async"
                             onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                const img = e.currentTarget as HTMLImageElement;
+                                const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                if (img.src !== fallback) {
+                                    img.src = fallback;
+                                }
                             }}
                         />
                         <span className="text-sm text-foreground/60">{user.username}</span>

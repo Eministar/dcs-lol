@@ -43,25 +43,52 @@ const SHOWCASE_DB_FILE = path.join(__dirname, "showcase.json");
 async function ensureSchema() {
     // Links table
     const createLinksSql = `
-        CREATE TABLE IF NOT EXISTS links (
-            id BIGINT AUTO_INCREMENT PRIMARY KEY,
-            custom_id VARCHAR(64) NOT NULL UNIQUE,
-            original_url VARCHAR(2048) NOT NULL,
+        CREATE TABLE IF NOT EXISTS links
+        (
+            id
+            BIGINT
+            AUTO_INCREMENT
+            PRIMARY
+            KEY,
+            custom_id
+            VARCHAR
+        (
+            64
+        ) NOT NULL UNIQUE,
+            original_url VARCHAR
+        (
+            2048
+        ) NOT NULL,
             clicks BIGINT NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await pool.query(createLinksSql);
 
     // Users table for Discord auth
     const createUsersSql = `
-        CREATE TABLE IF NOT EXISTS users (
-            id BIGINT AUTO_INCREMENT PRIMARY KEY,
-            discord_id VARCHAR(64) NOT NULL UNIQUE,
-            username VARCHAR(128) NOT NULL,
-            avatar VARCHAR(256) NULL,
+        CREATE TABLE IF NOT EXISTS users
+        (
+            id
+            BIGINT
+            AUTO_INCREMENT
+            PRIMARY
+            KEY,
+            discord_id
+            VARCHAR
+        (
+            64
+        ) NOT NULL UNIQUE,
+            username VARCHAR
+        (
+            128
+        ) NOT NULL,
+            avatar VARCHAR
+        (
+            256
+        ) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `;
     await pool.query(createUsersSql);
 
@@ -113,9 +140,21 @@ app.set("trust proxy", 1);
 app.disable("x-powered-by");
 app.use(helmet({
     crossOriginResourcePolicy: {policy: "cross-origin"},
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://api.fontshare.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https://cdn.discordapp.com"],
+            connectSrc: ["'self'", "https://discord.com"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+        }
+    }
 }));
 app.use(compression());
-app.use(cors({ credentials: true, origin: true }));
+app.use(cors({credentials: true, origin: true}));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json({limit: "1mb"}));
 
@@ -153,7 +192,9 @@ function verifySession(token) {
         const givenSig = Buffer.from(sigB64.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
         if (expectedSig !== givenSig) return null;
         return JSON.parse(data);
-    } catch (e) { return null; }
+    } catch (e) {
+        return null;
+    }
 }
 
 function setCookie(res, name, value, options = {}) {
@@ -180,9 +221,10 @@ app.use((req, res, next) => {
         const cookies = parseCookies(req.headers.cookie || '');
         const session = verifySession(cookies.session);
         if (session && session.userId) {
-            req.user = { id: session.userId, username: session.username, avatar: session.avatar };
+            req.user = {id: session.userId, username: session.username, avatar: session.avatar};
         }
-    } catch (e) {}
+    } catch (e) {
+    }
     next();
 });
 
@@ -197,12 +239,12 @@ app.use(express.static(PUBLIC_DIR));
 // Proxy for Discord guild icons to satisfy strict CSP (img-src 'self' data:)
 app.get('/proxy/discord/icons/:guildId/:icon', async (req, res) => {
     try {
-        const { guildId, icon } = req.params;
+        const {guildId, icon} = req.params;
         const size = Math.min(256, Math.max(16, parseInt(req.query.size) || 128));
         const isAnimated = String(icon || '').startsWith('a_');
         const ext = isAnimated ? 'gif' : 'png';
         const target = `https://cdn.discordapp.com/icons/${encodeURIComponent(guildId)}/${encodeURIComponent(icon)}.${ext}?size=${size}`;
-        const upstream = await axios.get(target, { responseType: 'stream' });
+        const upstream = await axios.get(target, {responseType: 'stream'});
         res.setHeader('Content-Type', isAnimated ? 'image/gif' : 'image/png');
         res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
         upstream.data.pipe(res);
@@ -238,7 +280,7 @@ app.get("/health", (req, res) => res.json({status: "ok"}));
 
 // Auth endpoints (Discord OAuth)
 function requireAuth(req, res, next) {
-    if (!req.user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+    if (!req.user) return res.status(401).json({error: 'Nicht eingeloggt'});
     next();
 }
 
@@ -251,19 +293,19 @@ function getRedirectUri(req) {
 // Helper: returns the exact redirect_uri this server will use
 app.get('/api/auth/discord/redirect-uri', (req, res) => {
     try {
-        res.json({ redirectUri: getRedirectUri(req) });
+        res.json({redirectUri: getRedirectUri(req)});
     } catch (e) {
-        res.status(500).json({ error: 'failed', message: e?.message || String(e) });
+        res.status(500).json({error: 'failed', message: e?.message || String(e)});
     }
 });
 
 app.get('/api/auth/discord/login', (req, res) => {
     const clientId = process.env.DISCORD_CLIENT_ID;
-    if (!clientId) return res.status(500).json({ error: 'Discord OAuth nicht konfiguriert' });
+    if (!clientId) return res.status(500).json({error: 'Discord OAuth nicht konfiguriert'});
 
-    const stateRaw = JSON.stringify({ t: Date.now(), nonce: Math.random().toString(36).slice(2) });
+    const stateRaw = JSON.stringify({t: Date.now(), nonce: Math.random().toString(36).slice(2)});
     const state = base64url(stateRaw);
-    setCookie(res, 'oauth_state', state, { httpOnly: true, sameSite: 'Lax', maxAge: 600 });
+    setCookie(res, 'oauth_state', state, {httpOnly: true, sameSite: 'Lax', maxAge: 600});
 
     const redirectUri = getRedirectUri(req);
     const params = new URLSearchParams({
@@ -279,22 +321,22 @@ app.get('/api/auth/discord/login', (req, res) => {
 
 app.get('/api/auth/discord/callback', async (req, res) => {
     try {
-        const { code, state, error: oauthError } = req.query;
+        const {code, state, error: oauthError} = req.query;
         const cookies = parseCookies(req.headers.cookie || '');
 
         // If Discord returned an explicit error (e.g., access_denied, interaction_required)
         if (oauthError) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_' + encodeURIComponent(String(oauthError)));
         }
 
         if (!state || cookies.oauth_state !== state) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_state');
         }
 
         if (!code) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_missing_code');
         }
 
@@ -302,7 +344,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
         const clientSecret = process.env.DISCORD_CLIENT_SECRET;
         const redirectUri = getRedirectUri(req);
         if (!clientId || !clientSecret) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_not_configured');
         }
 
@@ -315,17 +357,17 @@ app.get('/api/auth/discord/callback', async (req, res) => {
             redirect_uri: redirectUri
         });
         const tokenResp = await axios.post('https://discord.com/api/v10/oauth2/token', body.toString(), {
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'}
         });
         const accessToken = tokenResp.data && tokenResp.data.access_token;
         if (!accessToken) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_token');
         }
 
         // Fetch user
         const meResp = await axios.get('https://discord.com/api/v10/users/@me', {
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: {Authorization: `Bearer ${accessToken}`}
         });
         const du = meResp.data || {};
         const discordId = du.id;
@@ -341,7 +383,7 @@ app.get('/api/auth/discord/callback', async (req, res) => {
             avatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
         }
         if (!discordId) {
-            setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
             return res.redirect('/login?error=oauth_user');
         }
 
@@ -356,29 +398,32 @@ app.get('/api/auth/discord/callback', async (req, res) => {
             userId = resIns.insertId;
         }
 
-        const token = signSession({ userId, username, avatar });
-        setCookie(res, 'session', token, { httpOnly: true, sameSite: 'Lax', maxAge: 30 * 24 * 60 * 60 });
+        const token = signSession({userId, username, avatar});
+        setCookie(res, 'session', token, {httpOnly: true, sameSite: 'Lax', maxAge: 30 * 24 * 60 * 60});
         // clear state
-        setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
+        setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
 
         // Redirect to dashboard
         res.redirect('/edit');
     } catch (e) {
         console.error('discord callback error:', e?.response?.data || e?.message || e);
         // Best-effort cleanup and redirect to login with generic error
-        try { setCookie(res, 'oauth_state', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 }); } catch {}
+        try {
+            setCookie(res, 'oauth_state', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
+        } catch {
+        }
         res.redirect('/login?error=login_failed');
     }
 });
 
 app.get('/api/me', (req, res) => {
-    if (!req.user) return res.json({ user: null });
-    res.json({ user: req.user });
+    if (!req.user) return res.json({user: null});
+    res.json({user: req.user});
 });
 
 app.post('/api/logout', (req, res) => {
-    setCookie(res, 'session', '', { httpOnly: true, sameSite: 'Lax', maxAge: 1 });
-    res.json({ ok: true });
+    setCookie(res, 'session', '', {httpOnly: true, sameSite: 'Lax', maxAge: 1});
+    res.json({ok: true});
 });
 
 // Klick-Tracking (Client-seitig ausgelöst)
@@ -481,7 +526,7 @@ app.get("/api/info/:id", async (req, res) => {
         const inviteCode = inviteMatch ? inviteMatch[1] : null;
 
         if (!inviteCode) {
-            return res.status(400).json({ error: "Kein gültiger Invite-Code" });
+            return res.status(400).json({error: "Kein gültiger Invite-Code"});
         }
 
         const response = await axios.get(
@@ -510,7 +555,6 @@ app.get("/api/info/:id", async (req, res) => {
         return res.status(500).json({error: "Discord-Daten konnten nicht geladen werden"});
     }
 });
-
 
 
 function loadWebhooks() {
@@ -636,23 +680,23 @@ app.get('/api/my/links', requireAuth, async (req, res) => {
             clicks: Number(l.clicks || 0),
             createdAt: new Date(l.created_at).toISOString(),
         }));
-        res.json({ items });
+        res.json({items});
     } catch (e) {
         console.error('/api/my/links error:', e?.message || e);
-        res.status(500).json({ items: [] });
+        res.status(500).json({items: []});
     }
 });
 
 app.patch('/api/my/links/:id', requireAuth, async (req, res) => {
     try {
         const id = req.params.id;
-        const { originalUrl, newCustomId } = req.body || {};
+        const {originalUrl, newCustomId} = req.body || {};
 
         // Check ownership
         const [rows] = await pool.query('SELECT id, custom_id, original_url, user_id FROM links WHERE custom_id = ? LIMIT 1', [id]);
         const link = Array.isArray(rows) && rows[0];
-        if (!link) return res.status(404).json({ error: 'Link nicht gefunden' });
-        if (!link.user_id || link.user_id !== req.user.id) return res.status(403).json({ error: 'Kein Zugriff' });
+        if (!link) return res.status(404).json({error: 'Link nicht gefunden'});
+        if (!link.user_id || link.user_id !== req.user.id) return res.status(403).json({error: 'Kein Zugriff'});
 
         const updates = [];
         const params = [];
@@ -660,27 +704,29 @@ app.patch('/api/my/links/:id', requireAuth, async (req, res) => {
             let url = originalUrl.trim().replace(/^http:\/\//, 'https://');
             url = url.replace(/^https:\/\/discord\.com\/invite\//, 'https://discord.gg/');
             if (!/^https:\/\/discord\.(gg|com\/invite)\/[a-zA-Z0-9]+$/.test(url)) {
-                return res.status(400).json({ error: 'Ungültiger Discord-Link' });
+                return res.status(400).json({error: 'Ungültiger Discord-Link'});
             }
             updates.push('original_url = ?');
             params.push(url);
         }
         if (typeof newCustomId === 'string' && newCustomId.trim()) {
             const slug = newCustomId.trim();
-            if (!/^[a-zA-Z0-9_-]{3,32}$/.test(slug)) return res.status(400).json({ error: 'Ungültige ID' });
+            if (!/^[a-zA-Z0-9_-]{3,32}$/.test(slug)) return res.status(400).json({error: 'Ungültige ID'});
             // check conflict
             const [conf] = await pool.query('SELECT 1 FROM links WHERE custom_id = ? LIMIT 1', [slug]);
-            if (Array.isArray(conf) && conf.length > 0) return res.status(409).json({ error: 'Diese ID existiert bereits' });
+            if (Array.isArray(conf) && conf.length > 0) return res.status(409).json({error: 'Diese ID existiert bereits'});
             updates.push('custom_id = ?');
             params.push(slug);
         }
-        if (updates.length === 0) return res.json({ ok: true });
+        if (updates.length === 0) return res.json({ok: true});
         params.push(id);
-        await pool.query(`UPDATE links SET ${updates.join(', ')} WHERE custom_id = ?`, params);
-        res.json({ ok: true });
+        await pool.query(`UPDATE links
+                          SET ${updates.join(', ')}
+                          WHERE custom_id = ?`, params);
+        res.json({ok: true});
     } catch (e) {
         console.error('patch /api/my/links error:', e?.message || e);
-        res.status(500).json({ error: 'Serverfehler' });
+        res.status(500).json({error: 'Serverfehler'});
     }
 });
 
@@ -689,13 +735,13 @@ app.delete('/api/my/links/:id', requireAuth, async (req, res) => {
         const id = req.params.id;
         const [rows] = await pool.query('SELECT user_id FROM links WHERE custom_id = ? LIMIT 1', [id]);
         const link = Array.isArray(rows) && rows[0];
-        if (!link) return res.status(404).json({ error: 'Link nicht gefunden' });
-        if (!link.user_id || link.user_id !== req.user.id) return res.status(403).json({ error: 'Kein Zugriff' });
+        if (!link) return res.status(404).json({error: 'Link nicht gefunden'});
+        if (!link.user_id || link.user_id !== req.user.id) return res.status(403).json({error: 'Kein Zugriff'});
         await pool.query('DELETE FROM links WHERE custom_id = ?', [id]);
-        res.json({ ok: true });
+        res.json({ok: true});
     } catch (e) {
         console.error('delete /api/my/links error:', e?.message || e);
-        res.status(500).json({ error: 'Serverfehler' });
+        res.status(500).json({error: 'Serverfehler'});
     }
 });
 
@@ -770,13 +816,13 @@ function timeSince(date) {
 
 // SPA Fallback for React Router (must be after all API routes)
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-    return res.status(404).end();
-  }
-  // Serve index.html from built dist if present, otherwise project root
-  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+        return res.status(404).end();
+    }
+    // Serve index.html from built dist if present, otherwise project root
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Backend läuft auf http://0.0.0.0:${PORT}`);
+    console.log(`Backend läuft auf http://0.0.0.0:${PORT}`);
 });

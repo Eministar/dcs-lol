@@ -143,12 +143,12 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://pagead2.googlesyndication.com", "https://www.googletagservices.com", "https://adservice.google.com", "https://www.google-analytics.com", "https://googleads.g.doubleclick.net"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://api.fontshare.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdn.fontshare.com", "data:"],
-            imgSrc: ["'self'", "data:", "blob:", "https://cdn.discordapp.com"],
-            connectSrc: ["'self'", "https://discord.com"],
-            frameSrc: ["'none'"],
+            imgSrc: ["'self'", "data:", "blob:", "https://cdn.discordapp.com", "https://pagead2.googlesyndication.com", "https://www.google-analytics.com", "https://googleads.g.doubleclick.net", "https://*.google.com", "https://*.gstatic.com"],
+            connectSrc: ["'self'", "https://discord.com", "https://pagead2.googlesyndication.com", "https://www.google-analytics.com", "https://googleads.g.doubleclick.net"],
+            frameSrc: ["https://googleads.g.doubleclick.net", "https://www.google.com", "https://tpc.googlesyndication.com"],
             objectSrc: ["'none'"],
         }
     }

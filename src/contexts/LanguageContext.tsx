@@ -230,8 +230,8 @@ const translations: Translations = {
         terms7:
             "Beendigung: Wir behalten uns das Recht vor, deinen Zugang bei Verstößen zu sperren.",
         terms8:
-            "Anwendbares Recht: Es gilt deutsches Recht. Gerichtsstand ist Berlin.",
-        terms9: "Kontakt: Bei Fragen erreichst du uns unter info@dcs.lol.",
+            "Anwendbares Recht: Es gilt deutsches Recht. Gerichtsstand ist Karlsruhe.",
+        terms9: "Kontakt: Bei Fragen erreichst du uns unter hello@star-dev.xyz.",
         terms10:
             "Reservierte Routen: Bestimmte Pfade wie /support, /about, /terms oder ähnliche sind fest für dcs.lol reserviert und dürfen nicht von Nutzern als Kurzlinks erstellt werden, da dies zu Verwirrung oder Missbrauch führen kann. Sollten solche Links dennoch erstellt werden, behalten wir uns das Recht vor, diese ohne Vorankündigung zu entfernen, dem entsprechenden Account zu entziehen oder die Weiterleitung auf offizielle dcs.lol-Discord-Server umzuleiten.",
         terms11:
@@ -310,7 +310,7 @@ const translations: Translations = {
         "tos.section8.item1": "Wiederholter oder vorsätzlicher Missbrauch kann zu einer temporären oder dauerhaften Sperrung führen.",
 
         "tos.section9.title": "9. Kontakt",
-        "tos.section9.item1": "Bei Fragen erreichst du uns unter info@dcs.lol.",
+        "tos.section9.item1": "Bei Fragen erreichst du uns unter hello@star-dev.xyz.",
 
         // --- Public pages: Privacy Policy (/privacy) ---
         "privacyPage.title": "Datenschutzerklärung",
@@ -562,7 +562,7 @@ const translations: Translations = {
             "Termination: We reserve the right to suspend your access for violations.",
         terms8:
             "Governing Law: German law applies. Jurisdiction is Berlin, Germany.",
-        terms9: "Contact: For questions, reach us at info@dcs.lol.",
+        terms9: "Contact: For questions, reach us at hello@star-dev.xyz.",
         terms10:
             "Reserved routes: Certain paths like /support, /about, /terms, /tos, /privacy, /login are reserved for dcs.lol and must not be used as short IDs. If such short links are created, we may remove or redirect them without notice to prevent confusion or abuse.",
         terms11:
@@ -639,7 +639,7 @@ const translations: Translations = {
         "tos.section8.item1": "Repeated or intentional abuse may result in temporary or permanent suspension.",
 
         "tos.section9.title": "9. Contact",
-        "tos.section9.item1": "If you have questions, contact us at info@dcs.lol.",
+        "tos.section9.item1": "If you have questions, contact us at hello@star-dev.xyz.",
 
         // --- Public pages: Privacy Policy (/privacy) ---
         "privacyPage.title": "Privacy Policy",

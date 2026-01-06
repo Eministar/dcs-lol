@@ -1,137 +1,163 @@
-import React, { useState } from 'react';
-import { Link, Menu, X } from 'lucide-react';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
-import { Link as RLink } from 'react-router-dom';
+import React, {useMemo, useState} from "react";
+import {Link2, Menu, X} from "lucide-react";
+import {useAuth} from "../contexts/AuthContext";
+import {Link as RLink} from "react-router-dom";
 
 export const Header: React.FC = () => {
-  const { t } = useLanguage();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, login, logout } = useAuth();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const {user, logout} = useAuth();
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setIsMenuOpen(false);
-  };
+    const avatarUrl = useMemo(() => {
+        const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
+        if (!user) return fallback;
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
-  };
+        const raw = (user.avatar || "").trim();
+        if (!raw) return fallback;
 
-  return (
-    <header className="sticky top-0 z-50 w-full bg-gray-900/80 backdrop-blur-xl border-b border-gray-800/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Link className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              dcs.lol
+        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+
+        const id = user.id;
+        if (!id) return fallback;
+
+        const ext = raw.startsWith("a_") ? "gif" : "png";
+        return `https://cdn.discordapp.com/avatars/${id}/${raw}.${ext}?size=128`;
+    }, [user]);
+
+    const scrollTo = (id: string) => {
+        document.getElementById(id)?.scrollIntoView({behavior: "smooth"});
+        setMenuOpen(false);
+    };
+
+    return (
+        <header className="fixed top-0 left-0 right-0 z-50">
+            <div className="mx-auto max-w-6xl px-6 py-4">
+                <nav className="glass-elevated rounded-2xl px-6 py-4 flex items-center justify-between">
+                    {/* Logo */}
+                    <RLink to="/" className="flex items-center gap-3 group">
+                        <div
+                            className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-transform group-hover:scale-105 glow-sm">
+                            <Link2 className="w-5 h-5 text-primary-foreground"/>
+                        </div>
+                        <span className="font-display text-2xl tracking-tight text-foreground">
+              dcs<span className="text-primary">.</span>lol
             </span>
-          </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => scrollToSection('features')}
-              className="text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium"
-            >
-              {t('features')}
-            </button>
-            <button 
-              onClick={() => scrollToSection('about')}
-              className="text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium"
-            >
-              {t('about')}
-            </button>
-            <LanguageSwitcher />
-            {user ? (
-              <>
-                <RLink to="/edit" className="text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium">Meine Links</RLink>
-                <button onClick={logout} className="text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium">Logout</button>
-                <img
-                  src={user.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}
-                  alt={user.username}
-                  title={user.username}
-                  className="w-8 h-8 rounded-full ring-2 ring-purple-500/40 object-cover"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://cdn.discordapp.com/embed/avatars/0.png'; }}
-                />
-              </>
-            ) : (
-              <>
-                <RLink to="/login" className="px-4 py-2 rounded-full border border-gray-700/70 text-gray-200 hover:text-white hover:border-purple-500/50 hover:bg-gray-800/60 transition-all duration-200 font-medium">Login</RLink>
-                <RLink to="/register" className="px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-600 text-white hover:from-purple-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg hover:shadow-purple-500/30">Registrieren</RLink>
-                <button 
-                  onClick={scrollToTop}
-                  className="px-5 py-2 rounded-full border border-gray-700/70 text-gray-200 hover:text-white hover:border-purple-500/50 hover:bg-gray-800/60 transition-all duration-200 font-medium"
-                >
-                  {t('getStarted')}
-                </button>
-              </>
-            )}
-          </nav>
-          
-          {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center space-x-4">
-            <LanguageSwitcher />
-            <button 
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? (
-                <X className="w-6 h-6 text-gray-300" />
-              ) : (
-                <Menu className="w-6 h-6 text-gray-300" />
-              )}
-            </button>
-          </div>
-        </div>
+                    </RLink>
 
-        {/* Mobile Navigation Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-b border-gray-800 shadow-2xl">
-            <nav className="px-4 py-6 space-y-4">
-              <button 
-                onClick={() => scrollToSection('features')}
-                className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50"
-              >
-                {t('features')}
-              </button>
-              <button 
-                onClick={() => scrollToSection('about')}
-                className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50"
-              >
-                {t('about')}
-              </button>
-              {user ? (
-                <>
-                  <RLink to="/edit" onClick={() => setIsMenuOpen(false)} className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50">Meine Links</RLink>
-                  <button onClick={() => { logout(); setIsMenuOpen(false); }} className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50">Logout</button>
-                </>
-              ) : (
-                <>
-                  <RLink to="/login" onClick={() => setIsMenuOpen(false)} className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50">Login</RLink>
-                  <RLink to="/register" onClick={() => setIsMenuOpen(false)} className="block w-full text-left text-gray-300 hover:text-purple-400 transition-colors duration-200 font-medium py-3 px-4 rounded-lg hover:bg-gray-800/50">Registrieren</RLink>
-                </>
-              )}
-              <button 
-                onClick={scrollToTop}
-                className="block w-full bg-gradient-to-r from-purple-500 to-blue-600 text-white py-3 px-4 rounded-lg hover:from-purple-600 hover:to-blue-700 transition-all duration-200 font-medium shadow-lg text-center"
-              >
-                {t('getStarted')}
-              </button>
-            </nav>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+                    {/* Desktop Nav */}
+                    <div className="hidden md:flex items-center gap-8">
+                        <button
+                            onClick={() => scrollTo("features")}
+                            className="text-foreground/60 hover:text-foreground transition-colors text-sm font-medium"
+                        >
+                            Features
+                        </button>
+                        <button
+                            onClick={() => scrollTo("faq")}
+                            className="text-foreground/60 hover:text-foreground transition-colors text-sm font-medium"
+                        >
+                            FAQ
+                        </button>
+                        {user ? (
+                            <div className="flex items-center gap-4">
+                                <RLink
+                                    to="/edit"
+                                    className="text-foreground/60 hover:text-foreground transition-colors text-sm font-medium"
+                                >
+                                    Meine Links
+                                </RLink>
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={avatarUrl}
+                                        alt={user.username}
+                                        className="w-8 h-8 rounded-full ring-2 ring-primary/40 bg-card object-cover"
+                                        referrerPolicy="no-referrer"
+                                        crossOrigin="anonymous"
+                                        loading="lazy"
+                                        decoding="async"
+                                        onError={(e) => {
+                                            (e.currentTarget as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
+                                        }}
+                                    />
+                                    <button
+                                        onClick={logout}
+                                        className="px-4 py-2 rounded-xl btn-secondary text-sm font-medium"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <RLink
+                                    to="/login"
+                                    className="px-4 py-2 rounded-xl text-foreground/60 hover:text-foreground transition-colors text-sm font-medium"
+                                >
+                                    Login
+                                </RLink>
+                                <RLink
+                                    to="/register"
+                                    className="px-5 py-2.5 rounded-xl btn-primary text-sm"
+                                >
+                                    Registrieren
+                                </RLink>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mobile Menu Toggle */}
+                    <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="md:hidden p-2 text-foreground"
+                        aria-label="Menu"
+                    >
+                        {menuOpen ? <X className="w-6 h-6"/> : <Menu className="w-6 h-6"/>}
+                    </button>
+                </nav>
+
+                {/* Mobile Menu */}
+                {menuOpen && (
+                    <div className="md:hidden mt-2 glass-elevated rounded-2xl p-6 animate-fade-up">
+                        <div className="flex flex-col gap-4">
+                            <button onClick={() => scrollTo("features")}
+                                    className="text-foreground font-medium py-2 text-left">
+                                Features
+                            </button>
+                            <button onClick={() => scrollTo("faq")}
+                                    className="text-foreground font-medium py-2 text-left">
+                                FAQ
+                            </button>
+                            {user ? (
+                                <>
+                                    <RLink to="/edit" onClick={() => setMenuOpen(false)}
+                                           className="text-foreground font-medium py-2">
+                                        Meine Links
+                                    </RLink>
+                                    <button onClick={() => {
+                                        logout();
+                                        setMenuOpen(false);
+                                    }} className="text-foreground/60 py-2 text-left">
+                                        Logout
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <RLink to="/login" onClick={() => setMenuOpen(false)}
+                                           className="text-foreground font-medium py-2">
+                                        Login
+                                    </RLink>
+                                    <RLink
+                                        to="/register"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="mt-2 px-5 py-3 rounded-xl btn-primary text-center"
+                                    >
+                                        Registrieren
+                                    </RLink>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </header>
+    );
 };

@@ -1,4 +1,4 @@
-import React, {createContext, ReactNode, useContext, useState} from "react";
+import React, {createContext, ReactNode, useContext, useEffect, useMemo, useState} from "react";
 
 interface Translations {
     [key: string]: {
@@ -270,6 +270,77 @@ const translations: Translations = {
         invalidUrl:
             "Bitte gib eine gültige Discord Invite URL ein (discord.gg/... oder discord.com/invite/...)",
         enterCustom: "Bitte gib einen Wunsch-Link ein",
+        "common.back": "Zurück",
+
+        // --- Public pages: Terms of Service (/tos) ---
+        "tos.title": "Nutzungsbedingungen (Terms of Service)",
+        "tos.intro": "Diese Nutzungsbedingungen regeln die Nutzung von dcs.lol. Mit der Nutzung des Services erklärst du dich mit diesen Bedingungen einverstanden.",
+        "tos.lastUpdated": "Zuletzt aktualisiert: Januar 2026",
+
+        "tos.section1.title": "1. Geltungsbereich & Service",
+        "tos.section1.item1": "dcs.lol verkürzt Discord-Invite-Links und leitet sie weiter.",
+        "tos.section1.item2": "Der Service kann sich technisch und inhaltlich weiterentwickeln (z. B. neue Features, Sicherheitsmaßnahmen).",
+
+        "tos.section2.title": "2. Erlaubte Nutzung",
+        "tos.section2.item1": "Du nutzt dcs.lol nur für rechtmäßige Zwecke und im Einklang mit geltendem Recht.",
+        "tos.section2.item2": "Du darfst keine Inhalte verlinken, die Rechte Dritter verletzen oder gegen Plattformregeln verstoßen.",
+
+        "tos.section3.title": "3. Verbotene Nutzung (Missbrauch)",
+        "tos.section3.item1": "Spam, Phishing, Malware, Betrug (Scams) oder irreführende Weiterleitungen sind strikt verboten.",
+        "tos.section3.item2": "Automatisierte Massenanfragen (Bots), die den Service beeinträchtigen, sind untersagt.",
+        "tos.section3.item3": "Das Umgehen von Sicherheitsmechanismen oder Rate-Limits ist verboten.",
+
+        "tos.section4.title": "4. Inhalte, Verantwortung & Moderation",
+        "tos.section4.item1": "Du bist für die von dir erstellten Links und deren Zielinhalte verantwortlich.",
+        "tos.section4.item2": "Wir können Links sperren oder entfernen, wenn Missbrauch vermutet wird oder eine rechtliche Verpflichtung besteht.",
+        "tos.section4.item3": "Bestimmte Pfade (z. B. /tos, /privacy, /login) können reserviert sein und dürfen nicht als Kurz-ID verwendet werden.",
+
+        "tos.section5.title": "5. Verfügbarkeit & Haftung",
+        "tos.section5.item1": "Der Service wird ohne Gewähr bereitgestellt; Ausfälle oder Unterbrechungen können nicht ausgeschlossen werden.",
+        "tos.section5.item2": "Soweit gesetzlich zulässig, haften wir nicht für indirekte Schäden oder Folgeschäden aus der Nutzung.",
+
+        "tos.section6.title": "6. Änderungen",
+        "tos.section6.item1": "Wir können diese Bedingungen anpassen. Die aktuelle Version ist jederzeit unter /tos verfügbar.",
+
+        "tos.section7.title": "7. Reservierte Routen",
+        "tos.section7.item1": "Bestimmte Pfade (z. B. /support, /about, /terms, /tos, /privacy, /login) sind für dcs.lol reserviert und dürfen nicht als Kurz-ID verwendet werden.",
+        "tos.section7.item2": "Wenn solche Kurzlinks erstellt wurden, können wir sie ohne Vorankündigung entfernen oder umleiten, um Missbrauch/Verwirrung zu vermeiden.",
+
+        "tos.section8.title": "8. Durchsetzung & Sperrung",
+        "tos.section8.item1": "Wiederholter oder vorsätzlicher Missbrauch kann zu einer temporären oder dauerhaften Sperrung führen.",
+
+        "tos.section9.title": "9. Kontakt",
+        "tos.section9.item1": "Bei Fragen erreichst du uns unter info@dcs.lol.",
+
+        // --- Public pages: Privacy Policy (/privacy) ---
+        "privacyPage.title": "Datenschutzerklärung",
+        "privacyPage.intro": "Wir nehmen Datenschutz ernst. Diese Erklärung beschreibt, welche Daten im Rahmen der Nutzung von dcs.lol verarbeitet werden und wofür.",
+        "privacyPage.lastUpdated": "Zuletzt aktualisiert: Januar 2026",
+
+        "privacyPage.section1.title": "1. Welche Daten können anfallen?",
+        "privacyPage.section1.item1": "Ursprünglicher Discord-Invite-Link, den du verkürzen möchtest.",
+        "privacyPage.section1.item2": "Technische Metadaten (z. B. Browser/Device) zur Darstellung und Fehleranalyse.",
+        "privacyPage.section1.item3": "IP-Adresse zur Missbrauchsprävention (sofern technisch erforderlich, ggf. gekürzt/anonymisiert).",
+        "privacyPage.section1.item4": "Anonyme oder aggregierte Klick-Statistiken (z. B. Anzahl Aufrufe).",
+
+        "privacyPage.section2.title": "2. Wofür nutzen wir diese Daten?",
+        "privacyPage.section2.item1": "Bereitstellung des Services (Shortlink erstellen und weiterleiten).",
+        "privacyPage.section2.item2": "Sicherheit und Missbrauchserkennung (Spam, Scams, automatisierte Angriffe).",
+        "privacyPage.section2.item3": "Stabilität und Qualitätsverbesserung (Fehlerdiagnose, Performance).",
+
+        "privacyPage.section3.title": "3. Weitergabe an Dritte",
+        "privacyPage.section3.item1": "Grundsätzlich verkaufen oder vermieten wir keine personenbezogenen Daten.",
+        "privacyPage.section3.item2": "Ausnahmen bestehen bei gesetzlichen Verpflichtungen oder zur Abwehr von Missbrauch/Sicherheitsvorfällen.",
+        "privacyPage.section3.item3": "Technische Dienstleister (z. B. Hosting/CDN) können im Rahmen des Betriebs Zugriff auf notwendige technische Daten haben.",
+
+        "privacyPage.section4.title": "4. Deine Rechte",
+        "privacyPage.section4.item1": "Du hast Rechte auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung (soweit anwendbar).",
+        "privacyPage.section4.item2": "Du kannst der Verarbeitung widersprechen, sofern gesetzliche Voraussetzungen vorliegen.",
+
+        "privacyPage.contactTitle": "Kontakt",
+        "privacyPage.contactText": "Bei Fragen zum Datenschutz erreichst du uns unter:",
+
+        // ...existing code...
     },
     en: {
         // Header
@@ -492,6 +563,10 @@ const translations: Translations = {
         terms8:
             "Governing Law: German law applies. Jurisdiction is Berlin, Germany.",
         terms9: "Contact: For questions, reach us at info@dcs.lol.",
+        terms10:
+            "Reserved routes: Certain paths like /support, /about, /terms, /tos, /privacy, /login are reserved for dcs.lol and must not be used as short IDs. If such short links are created, we may remove or redirect them without notice to prevent confusion or abuse.",
+        terms11:
+            "Enforcement & suspension: Repeated or intentional abuse may result in temporary or permanent suspension.",
 
         // Redirect Page
         redirectLoading: "Loading server...",
@@ -524,7 +599,95 @@ const translations: Translations = {
         invalidUrl:
             "Please enter a valid Discord invite URL (discord.gg/... or discord.com/invite/...)",
         enterCustom: "Please enter a custom link",
+        "common.back": "Back",
+
+        // --- Public pages: Terms of Service (/tos) ---
+        "tos.title": "Terms of Service",
+        "tos.intro": "These Terms of Service govern the use of dcs.lol. By using the service, you agree to these terms.",
+        "tos.lastUpdated": "Last updated: January 2026",
+
+        "tos.section1.title": "1. Scope & Service",
+        "tos.section1.item1": "dcs.lol shortens Discord invite links and redirects them.",
+        "tos.section1.item2": "The service may evolve over time (e.g., new features and security measures).",
+
+        "tos.section2.title": "2. Acceptable use",
+        "tos.section2.item1": "You may only use dcs.lol for lawful purposes and in compliance with applicable laws.",
+        "tos.section2.item2": "You must not link to content that violates third-party rights or platform rules.",
+
+        "tos.section3.title": "3. Prohibited use (abuse)",
+        "tos.section3.item1": "Spam, phishing, malware, scams, or misleading redirects are strictly prohibited.",
+        "tos.section3.item2": "Automated bulk requests (bots) that degrade the service are not allowed.",
+        "tos.section3.item3": "Bypassing security mechanisms or rate limits is prohibited.",
+
+        "tos.section4.title": "4. Content, responsibility & moderation",
+        "tos.section4.item1": "You are responsible for the links you create and their destination content.",
+        "tos.section4.item2": "We may block or remove links if abuse is suspected or we are legally required to do so.",
+        "tos.section4.item3": "Certain paths (e.g., /tos, /privacy, /login) may be reserved and must not be used as short IDs.",
+
+        "tos.section5.title": "5. Availability & liability",
+        "tos.section5.item1": "The service is provided \"as is\" without warranties; downtime or interruptions may occur.",
+        "tos.section5.item2": "To the extent permitted by law, we are not liable for indirect or consequential damages.",
+
+        "tos.section6.title": "6. Changes",
+        "tos.section6.item1": "We may update these terms. The current version is always available at /tos.",
+
+        "tos.section7.title": "7. Reserved routes",
+        "tos.section7.item1": "Certain paths (e.g., /support, /about, /terms, /tos, /privacy, /login) are reserved for dcs.lol and must not be used as short IDs.",
+        "tos.section7.item2": "If such short links were created, we may remove or redirect them without notice to prevent confusion or abuse.",
+
+        "tos.section8.title": "8. Enforcement & suspension",
+        "tos.section8.item1": "Repeated or intentional abuse may result in temporary or permanent suspension.",
+
+        "tos.section9.title": "9. Contact",
+        "tos.section9.item1": "If you have questions, contact us at info@dcs.lol.",
+
+        // --- Public pages: Privacy Policy (/privacy) ---
+        "privacyPage.title": "Privacy Policy",
+        "privacyPage.intro": "We take privacy seriously. This policy describes what data may be processed when using dcs.lol and why.",
+        "privacyPage.lastUpdated": "Last updated: January 2026",
+
+        "privacyPage.section1.title": "1. What data may be collected?",
+        "privacyPage.section1.item1": "The original Discord invite link you want to shorten.",
+        "privacyPage.section1.item2": "Technical metadata (e.g., browser/device) for rendering and troubleshooting.",
+        "privacyPage.section1.item3": "IP address for abuse prevention (if technically required, potentially truncated/anonymized).",
+        "privacyPage.section1.item4": "Anonymous or aggregated click statistics (e.g., number of visits).",
+
+        "privacyPage.section2.title": "2. Why do we use this data?",
+        "privacyPage.section2.item1": "Providing the service (creating and redirecting short links).",
+        "privacyPage.section2.item2": "Security and abuse prevention (spam, scams, automated attacks).",
+        "privacyPage.section2.item3": "Stability and improvement (diagnostics, performance).",
+
+        "privacyPage.section3.title": "3. Sharing with third parties",
+        "privacyPage.section3.item1": "We generally do not sell or rent personal data.",
+        "privacyPage.section3.item2": "Exceptions may apply for legal obligations or to respond to security incidents.",
+        "privacyPage.section3.item3": "Technical providers (e.g., hosting/CDN) may access necessary technical data to operate the service.",
+
+        "privacyPage.section4.title": "4. Your rights",
+        "privacyPage.section4.item1": "You may have rights to access, correction, deletion, and restriction (where applicable).",
+        "privacyPage.section4.item2": "You may object to processing if legal requirements are met.",
+
+        "privacyPage.contactTitle": "Contact",
+        "privacyPage.contactText": "For privacy-related questions, contact us at:",
+
+        // ...existing code...
     },
+};
+
+const STORAGE_KEY = "dcs.lol:lang";
+
+const getInitialLanguage = (): string => {
+    // 1) Persisted user preference
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored === "de" || stored === "en") return stored;
+    } catch {
+        // ignore
+    }
+
+    // 2) Browser language (fallback to en)
+    const navLang = (typeof navigator !== "undefined" && navigator.language) ? navigator.language : "en";
+    const normalized = navLang.toLowerCase();
+    return normalized.startsWith("de") ? "de" : "en";
 };
 
 interface LanguageContextType {
@@ -540,11 +703,28 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({
                                                                         children,
                                                                     }) => {
-    const [language, setLanguage] = useState("de");
+    const [language, setLanguage] = useState(getInitialLanguage);
 
-    const t = (key: string): string => {
-        return translations[language]?.[key] || key;
-    };
+    useEffect(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, language);
+        } catch {
+            // ignore
+        }
+    }, [language]);
+
+    useEffect(() => {
+        // Für SEO/Accessibility: HTML lang setzen
+        try {
+            document.documentElement.lang = language;
+        } catch {
+            // ignore
+        }
+    }, [language]);
+
+    const t = useMemo(() => {
+        return (key: string): string => translations[language]?.[key] || key;
+    }, [language]);
 
     return (
         <LanguageContext.Provider value={{language, setLanguage, t}}>

@@ -92,7 +92,7 @@ export const WebhookManager: React.FC<WebhookManagerProps> = ({isOpen, onClose})
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}/>
+            <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={onClose}/>
 
             <div
                 className="relative w-full max-w-5xl max-h-[90vh] bg-card rounded-3xl border border-border shadow-2xl overflow-hidden">
@@ -228,7 +228,8 @@ export const WebhookManager: React.FC<WebhookManagerProps> = ({isOpen, onClose})
                 {/* Add Form Modal */}
                 {showAddForm && (
                     <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-background/50" onClick={() => setShowAddForm(false)}/>
+                        <div className="absolute inset-0 bg-black/75 backdrop-blur-md"
+                             onClick={() => setShowAddForm(false)}/>
                         <div className="relative bg-card rounded-2xl p-6 max-w-lg w-full border border-border">
                             <h3 className="text-xl font-bold text-foreground mb-6">Neuen Webhook hinzufügen</h3>
                             <div className="space-y-4">

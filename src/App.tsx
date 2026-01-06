@@ -14,6 +14,8 @@ import {AuthProvider} from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Edit from "./pages/Edit";
+import TosPage from "./pages/TosPage";
+import PrivacyPage from "./pages/PrivacyPage";
 
 function HomePage() {
     const [linksOpen, setLinksOpen] = React.useState(false);
@@ -41,6 +43,8 @@ function App() {
                     <Route path="/login" element={<Login/>}/>
                     <Route path="/register" element={<Register/>}/>
                     <Route path="/edit" element={<Edit/>}/>
+                    <Route path="/tos" element={<TosPage/>}/>
+                    <Route path="/privacy" element={<PrivacyPage/>}/>
                     <Route path="/redirect" element={<Redirect/>}/>
                     <Route path="/:shortCode" element={<Redirect/>}/>
                 </Routes>

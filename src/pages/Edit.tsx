@@ -106,6 +106,24 @@ const Edit: React.FC = () => {
         }
     };
 
+    const getAvatarUrl = () => {
+        // Unterstützt sowohl vollständige URL als auch Discord avatar-hash
+        const fallback = "https://cdn.discordapp.com/embed/avatars/0.png";
+        if (!user) return fallback;
+
+        const raw = (user.avatar || "").trim();
+        if (!raw) return fallback;
+
+        if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+
+        const id = user.id;
+        if (!id) return fallback;
+
+        // Discord CDN: GIF wenn animiert, sonst PNG
+        const ext = raw.startsWith("a_") ? "gif" : "png";
+        return `https://cdn.discordapp.com/avatars/${id}/${raw}.${ext}?size=128`;
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -140,24 +158,26 @@ const Edit: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen" style={{backgroundColor: '#0b1120'}}>
             {/* Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-black/60"/>
+                <div className="absolute inset-0 opacity-[0.06] bg-grid"/>
+                <div className="absolute inset-0 noise"/>
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/8 rounded-full blur-[150px]"/>
                 <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent/6 rounded-full blur-[120px]"/>
-                <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background"/>
             </div>
 
             <div className="relative z-10 max-w-5xl mx-auto px-6 py-12">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="glass-elevated rounded-2xl px-6 py-4 flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <RLink to="/" className="flex items-center gap-2">
+                        <RLink to="/" className="flex items-center gap-2 group">
                             <div
-                                className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-sm">
+                                className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-sm transition-transform group-hover:scale-105">
                                 <Link2 className="w-5 h-5 text-primary-foreground"/>
                             </div>
-                            <span className="font-display text-xl text-foreground">
+                            <span className="font-display text-xl text-foreground tracking-tight">
                 dcs<span className="text-primary">.</span>lol
               </span>
                         </RLink>
@@ -166,9 +186,13 @@ const Edit: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-3">
                         <img
-                            src={user.avatar || "https://cdn.discordapp.com/embed/avatars/0.png"}
+                            src={getAvatarUrl()}
                             alt={user.username}
-                            className="w-8 h-8 rounded-full ring-2 ring-primary/40"
+                            className="w-8 h-8 rounded-full ring-2 ring-primary/40 bg-card object-cover"
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png";
                             }}

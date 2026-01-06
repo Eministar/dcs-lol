@@ -1,104 +1,53 @@
 <!doctype html>
-<html lang="de" prefix="og: https://ogp.me/ns#">
+<html lang="de" style="background-color: #0b1120;">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  
-  <title>Discord Link Kürzer | dcs.lol - Kostenlose Einladungslinks verkürzen</title>
-  <meta name="description" content="Verkürze Discord-Einladungslinks kostenlos! Erstelle merkbare Kurzlinks für deinen Server. Perfekt für Instagram Bio, TikTok & WhatsApp. Jetzt stylische dcs.lol-Links erstellen!" />
-  
-  <!-- Primary Meta Tags -->
-  <meta name="keywords" content="Discord Link Kürzer, Discord Einladung verkürzen, Discord URL Shortener, kostenlos Discord Link, Discord Server Einladung, kurze Discord Links, dcs.lol, Discord Bio Link, Discord Invite Shortener, Discord Marketing" />
-  <meta name="author" content="dcs.lol Dev Team" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
-  <meta name="theme-color" content="#5865F2" />
-  
-  <!-- Canonical -->
-  <link rel="canonical" href="https://dcs.lol/" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="theme-color" content="#0b1120"/>
+    <meta name="color-scheme" content="dark"/>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" href="/assets/favicon.ico" type="image/x-icon" />
-  <link rel="apple-touch-icon" href="/assets/logo.png" />
-  <link rel="manifest" href="/site.webmanifest" />
+    <!-- Fonts: preload + deterministic loading (reduziert FOUT/Plain-Fallback) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link rel="preconnect" href="https://api.fontshare.com"/>
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:title" content="Discord Einladungslinks kostenlos kürzen | dcs.lol" />
-  <meta property="og:description" content="Erstelle stylische Kurzlinks für deinen Discord-Server. Perfekt für soziale Medien & WhatsApp. Sofort nutzbar, keine Anmeldung!" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dcs.lol/" />
-  <meta property="og:image" content="https://dcs.lol/assets/logo.png" />
-  <meta property="og:image:width" content="630" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="dcs.lol - Discord Einladungslinks verkürzen" />
-  <meta property="og:site_name" content="dcs.lol" />
-  <meta property="og:locale" content="de_DE" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap"/>
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"/>
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kostenlos Discord-Links verkürzen | dcs.lol" />
-  <meta name="twitter:description" content="Erstelle einprägsame Kurzlinks für deinen Discord-Server. Ideal für Twitter, Instagram & TikTok!" />
-  <meta name="twitter:image" content="https://dcs.lol/assets/logo.png" />
-  <meta name="twitter:site" content="@dcslol" />
+    <title>dcs.lol — Discord Link Shortener</title>
+    <meta name="description" content="Der schnellste Discord-Link-Shortener. Kostenlos, ohne Limits."/>
+    <meta name="author" content="dcs.lol"/>
+    <meta name="keywords" content="Discord, Link Shortener, Kurzlinks, Discord Invite, dcs.lol"/>
 
-  <!-- WhatsApp Specific -->
-  <meta property="og:image:type" content="image/jpeg" />
-  <meta property="og:image:secure_url" content="https://dcs.lol/assets/logo.png" />
+    <meta property="og:title" content="dcs.lol — Discord Link Shortener"/>
+    <meta property="og:description" content="Der schnellste Discord-Link-Shortener. Kostenlos, ohne Limits."/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:image" content="/og-image.png"/>
 
-  <!-- Preload & Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <script type="module" src="/src/main.tsx"></script>
-  <!-- Structured Data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "dcs.lol Discord Link Shortener",
-    "description": "Kostenloser Service zum Verkürzen von Discord-Einladungslinks",
-    "applicationCategory": "Utility",
-    "operatingSystem": "All",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "1500"
-    },
-    "creator": {
-      "@type": "Organization",
-      "name": "dcs.lol"
-    }
-  }
-  </script>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="dcs.lol — Discord Link Shortener"/>
+    <meta name="twitter:description" content="Der schnellste Discord-Link-Shortener. Kostenlos, ohne Limits."/>
 
-  <!-- Sitemap -->
-  <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+    <link rel="canonical" href="https://dcs.lol"/>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body, #root {
+            background-color: #0b1120 !important;
+            color: #f0f4f8;
+            min-height: 100vh;
+        }
+    </style>
 </head>
-<body>
-  <div id="root"></div>
-  <!-- Performance & SEO Optimizations -->
-  <noscript>
-    <strong>dcs.lol benötigt JavaScript um zu funktionieren. Bitte aktiviere JS in deinem Browser.</strong>
-    <p>Alternative Methoden: <a href="https://discord.com/invite/">Direkter Discord-Link</a></p>
-  </noscript>
-  
-  <!-- Fallback content for SEO -->
-  <div style="display:none;">
-    <h1>Discord Link Kürzer</h1>
-    <h2>Kostenlose URL-Verkürzung für Discord-Server</h2>
-    <p>Erstelle stilvolle Kurzlinks für deine Discord-Community. Ideal für Social Media Bio, WhatsApp Status und digitale Visitenkarten.</p>
-    <p>Beliebte Funktionen: Discord Link kürzen ohne Anmeldung, benutzerdefinierte URLs, Link-Tracking, QR-Code Generator für Discord-Einladungen</p>
-  </div>
+<body style="background-color: #0b1120 !important; color: #f0f4f8; margin: 0;">
+<div id="root"></div>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
 
-
-
-
- 
-  
-    

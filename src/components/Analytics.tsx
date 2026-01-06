@@ -1,95 +1,80 @@
 import React from 'react';
-import { TrendingUp, Eye, MapPin, Smartphone } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import {Eye, MapPin, Smartphone, TrendingUp} from 'lucide-react';
+import {useLanguage} from '../contexts/LanguageContext';
 
 export const Analytics: React.FC = () => {
-  const { t } = useLanguage();
+    const {t} = useLanguage();
 
-  return (
-    <section id="stats" className="py-20 bg-gradient-to-br from-gray-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            {t('analyticsTitle')} <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{t('analyticsSubtitle')}</span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {t('analyticsDescription')}
-          </p>
-        </div>
+    const features = [
+        {icon: TrendingUp, title: t('realTimeTracking'), desc: t('realTimeTrackingDesc')},
+        {icon: Eye, title: t('clickAnalytics'), desc: t('clickAnalyticsDesc')},
+        {icon: MapPin, title: t('geographicData'), desc: t('geographicDataDesc')},
+        {icon: Smartphone, title: t('deviceAnalytics'), desc: t('deviceAnalyticsDesc')},
+    ];
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('realTimeTracking')}</h3>
-                <p className="text-gray-600">{t('realTimeTrackingDesc')}</p>
-              </div>
-            </div>
+    const stats = [
+        {label: t('totalClicks'), value: '2,547'},
+        {label: t('newMembers'), value: '1,823'},
+        {label: t('conversionRate'), value: '71.6%'},
+        {label: t('countries'), value: '47'},
+    ];
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Eye className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('clickAnalytics')}</h3>
-                <p className="text-gray-600">{t('clickAnalyticsDesc')}</p>
-              </div>
-            </div>
+    return (
+        <section id="stats" className="py-32 bg-background relative overflow-hidden">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                {/* Header */}
+                <div className="text-center mb-20">
+          <span
+              className="inline-block px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-medium tracking-wide mb-8">
+            Analytics
+          </span>
+                    <h2 className="font-display text-5xl md:text-6xl text-foreground mb-6">
+                        {t('analyticsTitle')}{' '}
+                        <span className="italic text-primary">{t('analyticsSubtitle')}</span>
+                    </h2>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                        {t('analyticsDescription')}
+                    </p>
+                </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-violet-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('geographicData')}</h3>
-                <p className="text-gray-600">{t('geographicDataDesc')}</p>
-              </div>
-            </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    {/* Features */}
+                    <div className="space-y-8">
+                        {features.map((feature, index) => (
+                            <div key={index} className="flex items-start gap-4">
+                                <div
+                                    className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    <feature.icon className="w-6 h-6 text-primary"/>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
+                                    <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{t('deviceAnalytics')}</h3>
-                <p className="text-gray-600">{t('deviceAnalyticsDesc')}</p>
-              </div>
-            </div>
-          </div>
+                    {/* Dashboard Preview */}
+                    <div className="bg-card border border-border rounded-2xl p-8">
+                        <div className="mb-6">
+                            <h4 className="text-lg font-semibold text-foreground mb-1">{t('dashboardPreview')}</h4>
+                            <p className="text-muted-foreground text-sm">{t('liveData')}</p>
+                        </div>
 
-          <div className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-200">
-            <div className="mb-6">
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">{t('dashboardPreview')}</h4>
-              <p className="text-gray-600">{t('liveData')}</p>
+                        <div className="space-y-4">
+                            {stats.map((stat, index) => (
+                                <div
+                                    key={index}
+                                    className="flex justify-between items-center p-4 bg-background rounded-xl border border-border"
+                                >
+                                    <span className="text-muted-foreground">{stat.label}</span>
+                                    <span className="text-2xl font-bold text-primary">{stat.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl">
-                <span className="text-gray-700">{t('totalClicks')}</span>
-                <span className="text-2xl font-bold text-blue-600">2,547</span>
-              </div>
-              
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
-                <span className="text-gray-700">{t('newMembers')}</span>
-                <span className="text-2xl font-bold text-green-600">1,823</span>
-              </div>
-              
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl">
-                <span className="text-gray-700">{t('conversionRate')}</span>
-                <span className="text-2xl font-bold text-purple-600">71.6%</span>
-              </div>
-              
-              <div className="flex justify-between items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl">
-                <span className="text-gray-700">{t('countries')}</span>
-                <span className="text-2xl font-bold text-orange-600">47</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };

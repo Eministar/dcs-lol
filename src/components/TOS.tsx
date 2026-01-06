@@ -1,88 +1,70 @@
-import React from 'react';
-import { X, FileText, AlertCircle, Lock, Globe } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import React from "react";
+import {AlertCircle, FileText, X} from "lucide-react";
 
 interface TermsProps {
-  isOpen: boolean;
-  onClose: () => void;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-export const Terms: React.FC<TermsProps> = ({ isOpen, onClose }) => {
-  const { t, language } = useLanguage();
-  if (!isOpen) return null;
+const termsItems = [
+    "dcs.lol ist ein kostenloser Discord-Link-Shortener.",
+    "Der Service darf nur für legale Zwecke verwendet werden.",
+    "Spam, Phishing oder schädliche Inhalte sind verboten.",
+    "Wir behalten uns das Recht vor, Links jederzeit zu entfernen.",
+    "Der Service wird ohne Garantie bereitgestellt.",
+    "Wir haften nicht für Ausfälle oder Datenverluste.",
+    "Die Nutzung erfolgt auf eigenes Risiko.",
+    "Diese Bedingungen können jederzeit geändert werden.",
+    "Bei Verstoß kann der Zugang gesperrt werden.",
+];
 
-  // Ziehe alle Terms-Strings aus dem Übersetzungs-Context
-  const intro = t('termsIntro');
-  const title = t('termsTitle');
-  const lastUpdated = t('termsLastUpdated');
-  const items = [
-    t('terms1'),
-    t('terms2'),
-    t('terms3'),
-    t('terms4'),
-    t('terms5'),
-    t('terms6'),
-    t('terms7'),
-    t('terms8'),
-    t('terms9'),
-  ];
+export const Terms: React.FC<TermsProps> = ({isOpen, onClose}) => {
+    if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose}/>
 
-      {/* Modal */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900 rounded-3xl border border-gray-700 shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+            <div
+                className="relative w-full max-w-2xl max-h-[90vh] bg-card rounded-3xl border border-border shadow-2xl overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-border">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-primary"/>
+                        </div>
+                        <h2 className="text-2xl font-bold text-foreground">Nutzungsbedingungen</h2>
+                    </div>
+                    <button onClick={onClose} className="p-3 rounded-xl bg-secondary hover:bg-muted transition-colors">
+                        <X className="w-5 h-5 text-foreground"/>
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+                    <div className="space-y-6">
+                        <p className="text-muted-foreground text-center">
+                            Durch die Nutzung von dcs.lol erklärst du dich mit diesen Bedingungen einverstanden.
+                        </p>
+
+                        <div className="p-6 rounded-2xl bg-card border border-border">
+                            <div className="flex items-center gap-3 mb-4">
+                                <AlertCircle className="w-5 h-5 text-destructive"/>
+                                <h3 className="text-lg font-semibold text-foreground">Nutzungsbedingungen</h3>
+                            </div>
+                            <div className="space-y-3 text-muted-foreground">
+                                {termsItems.map((item, idx) => (
+                                    <p key={idx}>• {item}</p>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="text-center pt-4 border-t border-border">
+                            <p className="text-sm text-muted-foreground">Zuletzt aktualisiert: Januar 2026</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h2 className="text-3xl font-bold text-white">{title}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition-colors duration-200"
-          >
-            <X className="w-6 h-6 text-gray-300" />
-          </button>
         </div>
-
-        {/* Content */}
-        <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <div className="space-y-8">
-            {/* Intro */}
-            <div className="text-center mb-12">
-              <p className="text-xl text-gray-300 leading-relaxed">
-                {intro}
-              </p>
-            </div>
-
-            {/* Terms List */}
-            <div className="bg-gray-800/40 rounded-2xl p-6 border border-gray-700/50">
-              <div className="flex items-center space-x-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-red-400" />
-                <h3 className="text-2xl font-bold text-white">{title}</h3>
-              </div>
-              <div className="space-y-3 text-gray-300">
-                {items.map((line, idx) => (
-                  <p key={idx}>• {line}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer / Last Updated */}
-            <div className="text-center pt-8 border-t border-gray-700">
-              <p className="text-gray-500">{lastUpdated}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };

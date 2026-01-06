@@ -10,7 +10,7 @@ import {CTA} from "./components/CTA";
 import {Footer} from "./components/Footer";
 import {Redirect} from "./pages/Redirect";
 import LinksModal from "./components/LinksModal";
-import { AuthProvider } from "./contexts/AuthContext";
+import {AuthProvider} from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Edit from "./pages/Edit";
@@ -18,7 +18,7 @@ import Edit from "./pages/Edit";
 function HomePage() {
     const [linksOpen, setLinksOpen] = React.useState(false);
     return (
-        <div className="min-h-screen bg-black">
+        <div className="min-h-screen" style={{backgroundColor: '#0b1120'}}>
             <Header/>
             <Hero/>
             <Features/>

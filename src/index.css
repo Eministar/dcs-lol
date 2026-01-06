@@ -1,196 +1,372 @@
+/* Fonts werden in index.html geladen (stabiler als CSS @import). */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
+/* ============================================
+   FESTE DUNKLE FARBPALETTE - KEIN LIGHT MODE
+   ============================================ */
+
+:root {
+    --bg-dark: #0b1120;
+    --bg-card: #131c2e;
+    --bg-elevated: #1a2540;
+    --text-primary: #f0f4f8;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-green: #10b981;
+    --accent-teal: #14b8a6;
+    --border-color: #1e3a5f;
+    --border-light: #2d4a6f;
+
+    /* Tailwind CSS Variablen für Kompatibilität */
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 90%;
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 173 80% 36%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 50% 20%;
+    --input: 217 33% 17%;
+    --ring: 160 84% 39%;
+    --radius: 0.875rem;
+    --surface: 222 47% 8%;
+    --surface-elevated: 222 47% 14%;
+    --surface-overlay: 222 47% 18%;
 }
 
-@keyframes slideInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-@layer base {
-  * {
-    @apply border-gray-700;
-  }
-  body {
-    @apply bg-black text-white;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    /* Prevent horizontal scrolling */
-    overflow-x: hidden;
-  }
-
-  html {
-    /* Prevent horizontal scrolling */
-    overflow-x: hidden;
+/* ========== GLOBALE STYLES ========== */
+html {
+    background-color: #0b1120 !important;
     scroll-behavior: smooth;
-  }
-
-  /* Prevent horizontal overflow on all elements */
-  * {
-    max-width: 100%;
-    box-sizing: border-box;
-  }
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
 }
 
-/* Custom scrollbar */
+body {
+    background-color: #0b1120 !important;
+    color: #f0f4f8 !important;
+    font-family: "Satoshi", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+#root {
+    background-color: #0b1120 !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* ========== TAILWIND OVERRIDES - ERZWINGE DUNKLE FARBEN ========== */
+.bg-background {
+    background-color: #0b1120 !important;
+}
+
+.bg-card {
+    background-color: #131c2e !important;
+}
+
+.bg-surface {
+    background-color: #0f1729 !important;
+}
+
+.bg-muted {
+    background-color: #1a2540 !important;
+}
+
+.bg-popover {
+    background-color: #1a2540 !important;
+}
+
+.bg-secondary {
+    background-color: #1e3a5f !important;
+}
+
+.bg-accent {
+    background-color: #14b8a6 !important;
+}
+
+.bg-destructive {
+    background-color: #ef4444 !important;
+}
+
+.text-foreground {
+    color: #f0f4f8 !important;
+}
+
+.text-muted-foreground {
+    color: #94a3b8 !important;
+}
+
+.text-card-foreground {
+    color: #f0f4f8 !important;
+}
+
+.text-primary {
+    color: #10b981 !important;
+}
+
+.text-primary-foreground {
+    color: #ffffff !important;
+}
+
+.text-secondary-foreground {
+    color: #e2e8f0 !important;
+}
+
+.text-accent-foreground {
+    color: #ffffff !important;
+}
+
+.text-destructive {
+    color: #ef4444 !important;
+}
+
+.border-border {
+    border-color: #1e3a5f !important;
+}
+
+.border-primary {
+    border-color: #10b981 !important;
+}
+
+.border-primary\/20 {
+    border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.border-primary\/30 {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.border-primary\/40 {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+.bg-primary {
+    background-color: #10b981 !important;
+}
+
+.bg-primary\/5 {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+.bg-primary\/10 {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.bg-primary\/15 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.bg-primary\/20 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.bg-primary\/30 {
+    background-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.bg-accent\/5 {
+    background-color: rgba(20, 184, 166, 0.05) !important;
+}
+
+.bg-accent\/8 {
+    background-color: rgba(20, 184, 166, 0.08) !important;
+}
+
+.bg-accent\/10 {
+    background-color: rgba(20, 184, 166, 0.1) !important;
+}
+
+.bg-accent\/15 {
+    background-color: rgba(20, 184, 166, 0.15) !important;
+}
+
+/* Opacity Varianten für Text */
+.text-foreground\/40 {
+    color: rgba(240, 244, 248, 0.4) !important;
+}
+
+.text-foreground\/50 {
+    color: rgba(240, 244, 248, 0.5) !important;
+}
+
+.text-foreground\/60 {
+    color: rgba(240, 244, 248, 0.6) !important;
+}
+
+.text-foreground\/70 {
+    color: rgba(240, 244, 248, 0.7) !important;
+}
+
+.text-foreground\/80 {
+    color: rgba(240, 244, 248, 0.8) !important;
+}
+
+/* ========== GRADIENT TEXT ========== */
+.gradient-text {
+    background: linear-gradient(135deg, #10b981, #14b8a6, #0ea5e9) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* ========== GLASS EFFECTS ========== */
+.glass {
+    background: rgba(19, 28, 46, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid #1e3a5f !important;
+}
+
+.glass-elevated {
+    background: rgba(26, 37, 64, 0.98) !important;
+    backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid #1e3a5f !important;
+    box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== CARD GLOW ========== */
+.card-glow {
+    transition: all 0.3s ease;
+}
+
+.card-glow:hover {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.15);
+}
+
+/* ========== BUTTONS ========== */
+.btn-primary {
+    background: linear-gradient(135deg, #10b981, #14b8a6) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px -4px rgba(16, 185, 129, 0.5);
+}
+
+.btn-secondary {
+    background: #1e3a5f !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #2d4a6f !important;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #2d4a6f !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ========== INPUT STYLES ========== */
+.input-glow:focus {
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 0 20px -5px rgba(16, 185, 129, 0.2);
+}
+
+/* ========== SCROLLBAR ========== */
 ::-webkit-scrollbar {
-  width: 12px;
+    width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f2937;
+    background: #0b1120;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #8b5cf6, #3b82f6);
-  border-radius: 6px;
+    background: #1e3a5f;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #7c3aed, #2563eb);
+    background: #2d4a6f;
 }
 
-/* Loading animation */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Gradient text selection */
+/* ========== SELECTION ========== */
 ::selection {
-  background: linear-gradient(to right, #8b5cf6, #3b82f6);
-  color: white;
+    background: rgba(16, 185, 129, 0.3);
+    color: #f0f4f8;
 }
 
-/* Focus styles */
-button:focus,
-input:focus {
-  outline: 2px solid #8b5cf6;
-  outline-offset: 2px;
+/* ========== GLOW EFFECTS ========== */
+.glow-sm {
+    box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
 }
 
-/* Dark theme enhancements */
-.border-3 {
-  border-width: 3px;
+.glow-md {
+    box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.4);
 }
 
-/* Glow effects */
-.shadow-purple-500\/25 {
-  box-shadow: 0 25px 50px -12px rgba(168, 85, 247, 0.25);
+.glow-lg {
+    box-shadow: 0 0 60px -15px rgba(16, 185, 129, 0.5);
 }
 
-.shadow-blue-500\/25 {
-  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25);
+/* ========== TEXT GLOW ========== */
+.text-glow {
+    text-shadow: 0 0 30px rgba(16, 185, 129, 0.3);
 }
 
-.shadow-green-500\/25 {
-  box-shadow: 0 25px 50px -12px rgba(34, 197, 94, 0.25);
+/* ========== DIVIDER ========== */
+.divider-gradient {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #1e3a5f, rgba(16, 185, 129, 0.3), #1e3a5f, transparent);
 }
 
-.shadow-green-500\/10 {
-  box-shadow: 0 25px 50px -12px rgba(34, 197, 94, 0.1);
+/* ========== NOISE TEXTURE ========== */
+.noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
 }
 
-/* Prevent text overflow */
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* ========== BACKGROUND GRID (zentral) ========== */
+.bg-grid {
+    background-image: linear-gradient(rgba(16, 185, 129, 0.85) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.85) 1px, transparent 1px);
+    background-size: 60px 60px;
+    background-position: center;
 }
 
-/* Responsive container */
-.container {
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem;
-  padding-right: 1rem;
+.bg-grid-soft {
+    background-image: linear-gradient(rgba(16, 185, 129, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.55) 1px, transparent 1px);
+    background-size: 60px 60px;
+    background-position: center;
 }
 
-@media (min-width: 640px) {
-  .container {
-    max-width: 640px;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
+/* ========== FONT FAMILY ========== */
+/*
+  Ziel: eine einzige, konsistente Font über die komplette Seite.
+  Daher überschreiben wir Überschriften NICHT mit einer zweiten Display-Font.
+*/
+
+h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: inherit !important;
 }
 
-@media (min-width: 768px) {
-  .container {
-    max-width: 768px;
-  }
+.font-sans {
+    font-family: inherit !important;
 }
 
-@media (min-width: 1024px) {
-  .container {
-    max-width: 1024px;
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
+.font-mono, code, pre {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
-@media (min-width: 1280px) {
-  .container {
-    max-width: 1280px;
-  }
-}
-
-@media (min-width: 1536px) {
-  .container {
-    max-width: 1536px;
-  }
-}
-
-/* Custom slider styles */
-.slider::-webkit-slider-thumb {
-  appearance: none;
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: linear-gradient(to right, #8b5cf6, #3b82f6);
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-}
-
-.slider::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
-  border-radius: 50%;
-  background: linear-gradient(to right, #8b5cf6, #3b82f6);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+/* Alle Section-Hintergründe dunkel machen */
+section {
+    background-color: #0b1120;
 }

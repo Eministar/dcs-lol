@@ -1,201 +1,213 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Copy, Clock, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import React, {useEffect, useMemo, useState} from 'react';
+import {Check, ChevronLeft, ChevronRight, Clock, Copy, ExternalLink, TrendingUp} from 'lucide-react';
+import {useLanguage} from '../contexts/LanguageContext';
 
 interface RecentLink {
-  id: string;
-  originalUrl: string;
-  shortUrl: string;
-  clicks: number;
-  createdAt: string; // ISO string
+    id: string;
+    originalUrl: string;
+    shortUrl: string;
+    clicks: number;
+    createdAt: string;
 }
 
-interface LastUrlProps { openLinksModal?: () => void }
-export const LastUrl: React.FC<LastUrlProps> = ({ openLinksModal }) => {
-  const { t } = useLanguage();
-  const [recentLinks, setRecentLinks] = useState<RecentLink[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9;
+interface LastUrlProps {
+    openLinksModal?: () => void;
+}
 
-  const refetch = () => {
-    fetch('/api/recents?limit=45')
-      .then(res => res.json())
-      .then((data: RecentLink[]) => {
-        setRecentLinks(data || []);
-      })
-      .catch(err => console.error('Fehler beim Laden der Links:', err));
-  };
+export const LastUrl: React.FC<LastUrlProps> = ({openLinksModal}) => {
+    const {t} = useLanguage();
+    const [recentLinks, setRecentLinks] = useState<RecentLink[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const pageSize = 9;
 
-  useEffect(() => { refetch(); }, []);
-
-  // Live-Updates: bei Link-Erstellung und leichtes Polling
-  useEffect(() => {
-    const handler = () => refetch();
-    window.addEventListener('link-created', handler as EventListener);
-    const iv = setInterval(() => refetch(), 30000);
-    return () => {
-      window.removeEventListener('link-created', handler as EventListener);
-      clearInterval(iv);
+    const refetch = () => {
+        fetch('/api/recents?limit=45')
+            .then(res => res.json())
+            .then((data: RecentLink[]) => setRecentLinks(data || []))
+            .catch(err => console.error('Fehler beim Laden der Links:', err));
     };
-  }, []);
 
-  // Korrigiere Seite wenn Daten sich ändern
-  useEffect(() => {
-    const totalPages = Math.max(1, Math.ceil(recentLinks.length / pageSize));
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [recentLinks, currentPage]);
+    useEffect(() => {
+        refetch();
+    }, []);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(recentLinks.length / pageSize)), [recentLinks]);
-  const start = (currentPage - 1) * pageSize;
-  const visibleLinks = recentLinks.slice(start, start + pageSize);
+    useEffect(() => {
+        const handler = () => refetch();
+        window.addEventListener('link-created', handler as EventListener);
+        const iv = setInterval(() => refetch(), 30000);
+        return () => {
+            window.removeEventListener('link-created', handler as EventListener);
+            clearInterval(iv);
+        };
+    }, []);
 
-  const copyToClipboard = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url.startsWith('http') ? url : `https://${url}`);
-    } catch (err) {
-      console.error('Copy-Fehler:', err);
-    }
-  };
+    useEffect(() => {
+        const totalPages = Math.max(1, Math.ceil(recentLinks.length / pageSize));
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+    }, [recentLinks, currentPage]);
 
-  const fmtRelative = (iso: string) => {
-    try {
-      const d = new Date(iso);
-      const diffMs = Date.now() - d.getTime();
-      const rtf = new Intl.RelativeTimeFormat(navigator.language || 'de-DE', { numeric: 'auto' });
-      const minutes = Math.round(diffMs / 60000);
-      if (Math.abs(minutes) < 60) return rtf.format(-minutes, 'minute');
-      const hours = Math.round(minutes / 60);
-      if (Math.abs(hours) < 24) return rtf.format(-hours, 'hour');
-      const days = Math.round(hours / 24);
-      return rtf.format(-days, 'day');
-    } catch {
-      return new Date(iso).toLocaleString();
-    }
-  };
+    const totalPages = useMemo(() => Math.max(1, Math.ceil(recentLinks.length / pageSize)), [recentLinks]);
+    const start = (currentPage - 1) * pageSize;
+    const visibleLinks = recentLinks.slice(start, start + pageSize);
 
-  return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-gray-900 to-black overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6">
-            {t('recentTitle')}{' '}
-            <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              {t('recentSubtitle')}
-            </span>
-          </h2>
-          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
-            {t('recentDescription')}
-          </p>
-        </div>
+    const copyToClipboard = async (url: string, id: string) => {
+        try {
+            await navigator.clipboard.writeText(url.startsWith('http') ? url : `https://${url}`);
+            setCopiedId(id);
+            setTimeout(() => setCopiedId(null), 2000);
+        } catch (err) {
+            console.error('Copy-Fehler:', err);
+        }
+    };
 
-        <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-8">
-            {visibleLinks.map((link, index) => (
-              <div
-                key={link.id}
-                className="group bg-gray-800/40 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 hover:border-green-500/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-green-500/10"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animation: 'slideInUp 0.6s ease-out forwards'
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2 text-gray-400">
-                    <Clock className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm truncate" title={new Date(link.createdAt).toLocaleString()}>{fmtRelative(link.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-green-400">
-                    <TrendingUp className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-bold">{link.clicks}</span>
-                  </div>
+    const fmtRelative = (iso: string) => {
+        try {
+            const d = new Date(iso);
+            const diffMs = Date.now() - d.getTime();
+            const rtf = new Intl.RelativeTimeFormat(navigator.language || 'de-DE', {numeric: 'auto'});
+            const minutes = Math.round(diffMs / 60000);
+            if (Math.abs(minutes) < 60) return rtf.format(-minutes, 'minute');
+            const hours = Math.round(minutes / 60);
+            if (Math.abs(hours) < 24) return rtf.format(-hours, 'hour');
+            const days = Math.round(hours / 24);
+            return rtf.format(-days, 'day');
+        } catch {
+            return new Date(iso).toLocaleString();
+        }
+    };
+
+    return (
+        <section className="py-32 relative overflow-hidden" style={{backgroundColor: '#0b1120'}}>
+            {/* Decorative element */}
+            <div
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-24 bg-gradient-to-b from-transparent via-border to-transparent"/>
+
+            <div className="max-w-7xl mx-auto px-6 lg:px-8">
+                {/* Header */}
+                <div className="text-center mb-16">
+          <span
+              className="inline-block px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary text-sm font-medium tracking-wide mb-8">
+            Recent Links
+          </span>
+                    <h2 className="font-display text-5xl md:text-6xl text-foreground mb-6">
+                        {t('recentTitle')}{' '}
+                        <span className="italic text-primary">{t('recentSubtitle')}</span>
+                    </h2>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                        {t('recentDescription')}
+                    </p>
                 </div>
 
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">{t('original')}</p>
-                    <div className="text-gray-300 text-sm bg-gray-900/50 px-3 py-2 rounded-lg border border-gray-700/50 overflow-hidden">
-                      <div className="truncate" title={link.originalUrl}>
-                        {link.originalUrl}
-                      </div>
-                    </div>
-                  </div>
+                {/* Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {visibleLinks.map((link, index) => (
+                        <article
+                            key={link.id}
+                            className="group bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-500 hover:-translate-y-1"
+                            style={{animationDelay: `${index * 50}ms`}}
+                        >
+                            {/* Meta */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                    <Clock className="w-4 h-4"/>
+                                    <span
+                                        title={new Date(link.createdAt).toLocaleString()}>{fmtRelative(link.createdAt)}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-primary">
+                                    <TrendingUp className="w-4 h-4"/>
+                                    <span className="text-sm font-semibold">{link.clicks}</span>
+                                </div>
+                            </div>
 
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">{t('shortened')}</p>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 min-w-0">
-                        <code className="block text-green-400 font-mono text-sm sm:text-base bg-gray-900/70 px-3 py-2 rounded-lg border border-green-500/30 truncate" title={link.shortUrl}>
-                          {link.shortUrl}
-                        </code>
-                      </div>
-                      <div className="flex space-x-2 flex-shrink-0">
+                            {/* URLs */}
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">{t('original')}</p>
+                                    <div
+                                        className="text-foreground/70 text-sm bg-background px-3 py-2 rounded-lg border border-border overflow-hidden">
+                                        <div className="truncate" title={link.originalUrl}>
+                                            {link.originalUrl}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider">{t('shortened')}</p>
+                                    <div className="flex items-center gap-2">
+                                        <code
+                                            className="flex-1 text-primary font-mono text-sm bg-primary/5 px-3 py-2 rounded-lg border border-primary/20 truncate">
+                                            {link.shortUrl}
+                                        </code>
+                                        <button
+                                            onClick={() => copyToClipboard(link.shortUrl, link.id)}
+                                            className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+                                            title="Kopieren"
+                                        >
+                                            {copiedId === link.id ? <Check className="w-4 h-4"/> :
+                                                <Copy className="w-4 h-4"/>}
+                                        </button>
+                                        <a
+                                            href={link.shortUrl.startsWith('http') ? link.shortUrl : `https://${link.shortUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 bg-accent text-accent-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+                                            title="Öffnen"
+                                        >
+                                            <ExternalLink className="w-4 h-4"/>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="mt-4 pt-4 border-t border-border">
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>{t('clicksToday')}</span>
+                                    <span className="text-primary font-semibold">+{Math.floor(link.clicks * 0.1)}</span>
+                                </div>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+                {/* Pagination */}
+                {recentLinks.length > pageSize && (
+                    <div className="flex items-center justify-center gap-4 mt-12">
                         <button
-                          onClick={() => copyToClipboard(link.shortUrl)}
-                          className="p-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition-all duration-200 group-hover:scale-110"
-                          title="Kopieren"
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage <= 1}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl hover:border-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                          <Copy className="w-4 h-4" />
+                            <ChevronLeft className="w-4 h-4"/>
+                            <span className="hidden sm:inline">Zurück</span>
                         </button>
-                        <a
-                          href={link.shortUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-all duration-200 group-hover:scale-110"
-                          title="Öffnen"
+                        <span className="text-muted-foreground text-sm">
+              Seite {currentPage} von {totalPages}
+            </span>
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage >= totalPages}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl hover:border-primary/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                         >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </div>
+                            <span className="hidden sm:inline">Weiter</span>
+                            <ChevronRight className="w-4 h-4"/>
+                        </button>
                     </div>
-                  </div>
-                </div>
+                )}
 
-                <div className="mt-4 pt-4 border-t border-gray-700/50">
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{t('clicksToday')}</span>
-                    <span className="text-green-400 font-bold">+{Math.floor(link.clicks * 0.1)}</span>
-                  </div>
+                {/* CTA */}
+                <div className="text-center mt-16">
+                    {openLinksModal ? (
+                        <button
+                            onClick={openLinksModal}
+                            className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground font-medium rounded-full hover:bg-primary/90 transition-all"
+                        >
+                            {t('showAll')}
+                        </button>
+                    ) : null}
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {recentLinks.length > pageSize && (
-            <div className="flex items-center justify-between px-4 sm:px-8 mt-8 text-gray-300">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
-                className="inline-flex items-center gap-2 bg-gray-800/70 hover:bg-gray-700 disabled:opacity-40 border border-gray-700 rounded-xl px-3 py-2"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>Zurück</span>
-              </button>
-              <div>
-                Seite {currentPage} von {totalPages}
-              </div>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
-                className="inline-flex items-center gap-2 bg-gray-800/70 hover:bg-gray-700 disabled:opacity-40 border border-gray-700 rounded-xl px-3 py-2"
-              >
-                <span>Weiter</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
             </div>
-          )}
-        </div>
-
-        <div className="text-center mt-12">
-          {openLinksModal ? (
-            <button onClick={openLinksModal} className="inline-block bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-base sm:text-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-1">
-              {t('showAll')}
-            </button>
-          ) : (
-            <span className="text-gray-400 text-sm">Modal nicht verfügbar</span>
-          )}
-        </div>
-      </div>
-    </section>
-  );
+        </section>
+    );
 };

@@ -1,311 +1,230 @@
-import React, { useState, useEffect } from "react";
-import {
-  QrCode,
-  Download,
-  Copy,
-  CheckCircle,
-  Zap,
-  Sparkles,
-  Share2,
-} from "lucide-react";
+import React, {useEffect, useState} from "react";
+import {CheckCircle, Copy, Download, QrCode, Share2, Sparkles, X, Zap} from "lucide-react";
 import QRCodeLib from "qrcode";
-import { useLanguage } from "../contexts/LanguageContext";
 
 interface QRGeneratorProps {
-  url?: string;
-  isOpen: boolean;
-  onClose: () => void;
+    url?: string;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-export const QRGenerator: React.FC<QRGeneratorProps> = ({
-  url,
-  isOpen,
-  onClose,
-}) => {
-  const { t } = useLanguage();
-  const [qrDataUrl, setQrDataUrl] = useState<string>("");
-  const [customUrl, setCustomUrl] = useState(url || "");
-  const [qrStyle, setQrStyle] = useState("default");
-  const [qrSize, setQrSize] = useState(512);
-  const [copied, setCopied] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+const qrStyles = [
+    {id: "default", name: "Standard", colors: {dark: "#0a0f0d", light: "#FFFFFF"}},
+    {id: "primary", name: "Primary", colors: {dark: "#34d399", light: "#0a0f0d"}},
+    {id: "blue", name: "Ocean Blue", colors: {dark: "#38bdf8", light: "#0c1525"}},
+    {id: "purple", name: "Discord", colors: {dark: "#5865F2", light: "#1e1f2e"}},
+    {id: "pink", name: "Neon Pink", colors: {dark: "#f472b6", light: "#1a0d13"}},
+    {id: "dark", name: "Inverted", colors: {dark: "#f1f5f9", light: "#0a0f0d"}},
+];
 
-  const qrStyles = [
-    {
-      id: "default",
-      name: "Standard",
-      colors: { dark: "#000000", light: "#FFFFFF" },
-    },
-    {
-      id: "purple",
-      name: "Purple Glow",
-      colors: { dark: "#8B5CF6", light: "#F3F4F6" },
-    },
-    {
-      id: "blue",
-      name: "Ocean Blue",
-      colors: { dark: "#3B82F6", light: "#EFF6FF" },
-    },
-    {
-      id: "green",
-      name: "Matrix Green",
-      colors: { dark: "#10B981", light: "#ECFDF5" },
-    },
-    {
-      id: "pink",
-      name: "Neon Pink",
-      colors: { dark: "#EC4899", light: "#FDF2F8" },
-    },
-    {
-      id: "gradient",
-      name: "Discord Style",
-      colors: { dark: "#5865F2", light: "#F8FAFC" },
-    },
-  ];
+export const QRGenerator: React.FC<QRGeneratorProps> = ({url, isOpen, onClose}) => {
+    const [qrDataUrl, setQrDataUrl] = useState<string>("");
+    const [customUrl, setCustomUrl] = useState(url || "");
+    const [qrStyle, setQrStyle] = useState("primary");
+    const [qrSize, setQrSize] = useState(512);
+    const [copied, setCopied] = useState(false);
+    const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    if (customUrl && isOpen) {
-      generateQR();
-    }
-  }, [customUrl, qrStyle, qrSize, isOpen]);
+    useEffect(() => {
+        if (customUrl && isOpen) {
+            generateQR();
+        }
+    }, [customUrl, qrStyle, qrSize, isOpen]);
 
-  const generateQR = async () => {
-    if (!customUrl) return;
+    const generateQR = async () => {
+        if (!customUrl) return;
+        try {
+            const style = qrStyles.find((s) => s.id === qrStyle) || qrStyles[0];
+            const dataUrl = await QRCodeLib.toDataURL(customUrl, {
+                width: qrSize,
+                margin: 2,
+                color: {dark: style.colors.dark, light: style.colors.light},
+                errorCorrectionLevel: "M",
+            });
+            setQrDataUrl(dataUrl);
+        } catch (error) {
+            console.error("QR Code generation failed:", error);
+        }
+    };
 
-    try {
-      const style = qrStyles.find((s) => s.id === qrStyle) || qrStyles[0];
-      const dataUrl = await QRCodeLib.toDataURL(customUrl, {
-        width: qrSize,
-        margin: 2,
-        color: {
-          dark: style.colors.dark,
-          light: style.colors.light,
-        },
-        errorCorrectionLevel: "M",
-      });
-      setQrDataUrl(dataUrl);
-    } catch (error) {
-      console.error("QR Code generation failed:", error);
-    }
-  };
+    const downloadQR = async () => {
+        if (!qrDataUrl) return;
+        setDownloading(true);
+        try {
+            const link = document.createElement("a");
+            link.download = `dcs-lol-qr-${Date.now()}.png`;
+            link.href = qrDataUrl;
+            link.click();
+        } catch (error) {
+            console.error("Download failed:", error);
+        } finally {
+            setDownloading(false);
+        }
+    };
 
-  const downloadQR = async () => {
-    if (!qrDataUrl) return;
+    const copyQRImage = async () => {
+        if (!qrDataUrl) return;
+        try {
+            const response = await fetch(qrDataUrl);
+            const blob = await response.blob();
+            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error("Copy failed:", error);
+        }
+    };
 
-    setDownloading(true);
-    try {
-      const link = document.createElement("a");
-      link.download = `dcs-lol-qr-${Date.now()}.png`;
-      link.href = qrDataUrl;
-      link.click();
-    } catch (error) {
-      console.error("Download failed:", error);
-    } finally {
-      setDownloading(false);
-    }
-  };
+    if (!isOpen) return null;
 
-  const copyQRImage = async () => {
-    if (!qrDataUrl) return;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-md" onClick={onClose}/>
 
-    try {
-      const response = await fetch(qrDataUrl);
-      const blob = await response.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob }),
-      ]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Copy failed:", error);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-4xl bg-gray-900 rounded-3xl border border-gray-700 shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center">
-                <QrCode className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-black text-white">
-                  QR Code Generator
-                </h2>
-                <p className="text-purple-100">
-                  Erstelle stylische QR Codes für deine Links
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-3 bg-white/10 backdrop-blur-xl rounded-xl hover:bg-white/20 transition-colors duration-200"
-            >
-              <span className="text-white text-2xl">×</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Settings */}
-            <div className="space-y-8">
-              <div>
-                <label className="block text-white font-bold mb-4 text-lg">
-                  Link URL
-                </label>
-                <input
-                  type="text"
-                  value={customUrl}
-                  onChange={(e) => setCustomUrl(e.target.value)}
-                  placeholder="https://dcs.lol/meinserver"
-                  className="w-full px-6 py-4 bg-gray-800 border border-gray-600 rounded-2xl text-white text-lg focus:border-purple-500 focus:outline-none transition-all duration-300"
-                />
-              </div>
-
-              <div>
-                <label className="block text-white font-bold mb-4 text-lg">
-                  QR Code Style
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  {qrStyles.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => setQrStyle(style.id)}
-                      className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
-                        qrStyle === style.id
-                          ? "border-purple-500 bg-purple-500/20"
-                          : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
-                      }`}
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg mx-auto mb-2"
-                        style={{ backgroundColor: style.colors.dark }}
-                      ></div>
-                      <span className="text-white text-sm font-medium">
-                        {style.name}
-                      </span>
+            <div
+                className="relative w-full max-w-4xl bg-card rounded-3xl border border-border shadow-2xl overflow-hidden card-glow">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-border">
+                    <div className="flex items-center gap-4">
+                        <div
+                            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 flex items-center justify-center">
+                            <QrCode className="w-6 h-6 text-primary"/>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-foreground">QR Code Generator</h2>
+                            <p className="text-foreground/50 text-sm">Stylische QR Codes für deine Links</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-3 rounded-xl btn-secondary">
+                        <X className="w-5 h-5 text-foreground"/>
                     </button>
-                  ))}
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-white font-bold mb-4 text-lg">
-                  Größe: {qrSize}px
-                </label>
-                <input
-                  type="range"
-                  min="256"
-                  max="1024"
-                  step="128"
-                  value={qrSize}
-                  onChange={(e) => setQrSize(parseInt(e.target.value))}
-                  className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <div className="flex justify-between text-gray-400 text-sm mt-2">
-                  <span>256px</span>
-                  <span>512px</span>
-                  <span>1024px</span>
+                {/* Content */}
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Settings */}
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-foreground font-semibold mb-3">Link URL</label>
+                                <input
+                                    type="text"
+                                    value={customUrl}
+                                    onChange={(e) => setCustomUrl(e.target.value)}
+                                    placeholder="https://dcs.lol/meinserver"
+                                    className="w-full px-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground input-glow focus:outline-none transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-foreground font-semibold mb-3">Style</label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {qrStyles.map((style) => (
+                                        <button
+                                            key={style.id}
+                                            onClick={() => setQrStyle(style.id)}
+                                            className={`p-3 rounded-xl border-2 transition-all ${
+                                                qrStyle === style.id
+                                                    ? "border-primary bg-primary/10"
+                                                    : "border-border hover:border-primary/30"
+                                            }`}
+                                        >
+                                            <div
+                                                className="w-6 h-6 rounded-lg mx-auto mb-2 border border-border"
+                                                style={{backgroundColor: style.colors.dark}}
+                                            />
+                                            <span className="text-xs text-foreground/70">{style.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-foreground font-semibold mb-3">Größe: {qrSize}px</label>
+                                <input
+                                    type="range"
+                                    min="256"
+                                    max="1024"
+                                    step="128"
+                                    value={qrSize}
+                                    onChange={(e) => setQrSize(parseInt(e.target.value))}
+                                    className="w-full h-2 bg-card rounded-lg appearance-none cursor-pointer accent-primary"
+                                />
+                            </div>
+
+                            <button
+                                onClick={generateQR}
+                                disabled={!customUrl}
+                                className="w-full py-3 rounded-xl btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                <Zap className="w-5 h-5"/>
+                                QR Code generieren
+                            </button>
+                        </div>
+
+                        {/* Preview */}
+                        <div className="space-y-6">
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-primary"/>
+                                    Vorschau
+                                </h3>
+
+                                {qrDataUrl ? (
+                                    <div className="bg-card p-6 rounded-2xl inline-block border border-border">
+                                        <img src={qrDataUrl} alt="QR Code" className="max-w-full h-auto rounded-xl"
+                                             style={{maxWidth: "240px"}}/>
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="border-2 border-dashed border-border rounded-2xl p-12 text-center bg-card/50">
+                                        <QrCode className="w-12 h-12 text-foreground/30 mx-auto mb-3"/>
+                                        <p className="text-foreground/40">QR Code wird hier angezeigt</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {qrDataUrl && (
+                                <>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={downloadQR}
+                                            disabled={downloading}
+                                            className="flex-1 py-3 rounded-xl btn-primary flex items-center justify-center gap-2"
+                                        >
+                                            {downloading ? (
+                                                <div
+                                                    className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"/>
+                                            ) : (
+                                                <Download className="w-5 h-5"/>
+                                            )}
+                                            Download
+                                        </button>
+                                        <button
+                                            onClick={copyQRImage}
+                                            className="flex-1 py-3 rounded-xl btn-secondary flex items-center justify-center gap-2"
+                                        >
+                                            {copied ? <CheckCircle className="w-5 h-5"/> : <Copy className="w-5 h-5"/>}
+                                            {copied ? "Kopiert!" : "Kopieren"}
+                                        </button>
+                                    </div>
+
+                                    <div className="p-4 rounded-xl bg-card border border-border">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Share2 className="w-4 h-4 text-primary"/>
+                                            <span className="font-semibold text-foreground text-sm">Tipp</span>
+                                        </div>
+                                        <p className="text-foreground/50 text-sm">
+                                            Teile diesen QR Code auf Flyern, Postern oder Social Media. Ein Scan führt
+                                            direkt zu deinem Discord-Server!
+                                        </p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
-              </div>
-
-              <button
-                onClick={generateQR}
-                disabled={!customUrl}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
-              >
-                <Zap className="w-6 h-6" />
-                <span>QR Code generieren</span>
-              </button>
             </div>
-
-            {/* Preview */}
-            <div className="space-y-8">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-white mb-6 flex items-center justify-center space-x-3">
-                  <Sparkles className="w-6 h-6 text-purple-400" />
-                  <span>Vorschau</span>
-                </h3>
-
-                {qrDataUrl ? (
-                  <div className="bg-white p-8 rounded-3xl shadow-2xl inline-block">
-                    <img
-                      src={qrDataUrl}
-                      alt="QR Code"
-                      className="max-w-full h-auto rounded-2xl shadow-lg"
-                      style={{ maxWidth: "300px" }}
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-3xl p-16 text-center">
-                    <QrCode className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 text-lg">
-                      QR Code wird hier angezeigt
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {qrDataUrl && (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button
-                    onClick={downloadQR}
-                    disabled={downloading}
-                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-2xl font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg flex items-center justify-center space-x-2"
-                  >
-                    {downloading ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Download className="w-5 h-5" />
-                    )}
-                    <span>{downloading ? "Lädt..." : "Download"}</span>
-                  </button>
-
-                  <button
-                    onClick={copyQRImage}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-6 rounded-2xl font-bold hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg flex items-center justify-center space-x-2"
-                  >
-                    {copied ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <Copy className="w-5 h-5" />
-                    )}
-                    <span>{copied ? "Kopiert!" : "Kopieren"}</span>
-                  </button>
-                </div>
-              )}
-
-              {qrDataUrl && (
-                <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-2xl p-6 border border-purple-500/30">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <Share2 className="w-5 h-5 text-purple-400" />
-                    <h4 className="text-white font-bold">Verwendung</h4>
-                  </div>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    Teile diesen QR Code auf Flyern, Postern, Social Media oder
-                    überall wo Menschen deinen Discord-Server finden sollen. Ein
-                    Scan führt direkt zu deinem Server!
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };

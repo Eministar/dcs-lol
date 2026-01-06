@@ -1,83 +1,103 @@
-import React from 'react';
-import { Zap, Shield, Link2, Smartphone, Globe, Users } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import React from "react";
+import {Globe, Link2, Shield, Smartphone, Users, Zap} from "lucide-react";
+
+const features = [
+    {
+        icon: Zap,
+        title: "Blitzschnell",
+        description: "Links werden in Millisekunden erstellt und weitergeleitet.",
+        gradient: "from-yellow-500/20 to-orange-500/20",
+        iconColor: "text-yellow-400",
+    },
+    {
+        icon: Shield,
+        title: "Sicher & Privat",
+        description: "Alle Links sind verschlüsselt. 99.9% Uptime garantiert.",
+        gradient: "from-blue-500/20 to-cyan-500/20",
+        iconColor: "text-blue-400",
+    },
+    {
+        icon: Link2,
+        title: "Custom Names",
+        description: "Wähle eigene Namen für deine Links: dcs.lol/dein-name",
+        gradient: "from-primary/20 to-accent/20",
+        iconColor: "text-primary",
+    },
+    {
+        icon: Smartphone,
+        title: "Mobile-First",
+        description: "Perfekt optimiert für alle Geräte und Plattformen.",
+        gradient: "from-purple-500/20 to-pink-500/20",
+        iconColor: "text-purple-400",
+    },
+    {
+        icon: Globe,
+        title: "Weltweit verfügbar",
+        description: "Schnelle Redirects dank globaler Infrastruktur.",
+        gradient: "from-emerald-500/20 to-teal-500/20",
+        iconColor: "text-emerald-400",
+    },
+    {
+        icon: Users,
+        title: "Für Discord",
+        description: "Speziell für Discord-Communities entwickelt.",
+        gradient: "from-indigo-500/20 to-blue-500/20",
+        iconColor: "text-indigo-400",
+    },
+];
 
 export const Features: React.FC = () => {
-  const { t } = useLanguage();
-
-  const features = [
-    {
-      icon: Zap,
-      title: t('fastTitle'),
-      description: t('fastDesc'),
-      color: 'from-yellow-400 to-orange-500'
-    },
-    {
-      icon: Shield,
-      title: t('secureTitle'),
-      description: t('secureDesc'),
-      color: 'from-green-400 to-emerald-500'
-    },
-    {
-      icon: Link2,
-      title: t('easyTitle'),
-      description: t('easyDesc'),
-      color: 'from-blue-400 to-cyan-500'
-    },
-    {
-      icon: Smartphone,
-      title: t('mobileTitle'),
-      description: t('mobileDesc'),
-      color: 'from-purple-400 to-violet-500'
-    },
-    {
-      icon: Globe,
-      title: t('globalTitle'),
-      description: t('globalDesc'),
-      color: 'from-indigo-400 to-blue-500'
-    },
-    {
-      icon: Users,
-      title: t('discordTitle'),
-      description: t('discordDesc'),
-      color: 'from-pink-400 to-rose-500'
-    }
-  ];
-
-  return (
-    <section id="features" className="py-24 bg-gradient-to-b from-black to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-20">
-          <h2 className="text-5xl md:text-6xl font-black mb-6">
-            {t('whyTitle')} <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">dcs.lol</span>?
-          </h2>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            {t('whySubtitle')} 
-            <span className="text-purple-400"> {t('whyHighlight')}</span>
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="group p-8 bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-gray-700/50 hover:border-gray-600 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/10"
-            >
-              <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                <feature.icon className="w-8 h-8 text-white" />
-              </div>
-              
-              <h3 className="text-2xl font-bold text-white mb-4">
-                {feature.title}
-              </h3>
-              
-              <p className="text-gray-300 leading-relaxed text-lg">
-                {feature.description}
-              </p>
+    return (
+        <section id="features" className="py-24 md:py-32 relative" style={{backgroundColor: '#0b1120'}}>
+            {/* Background elements */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-[150px]"/>
+                <div className="absolute bottom-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-[120px]"/>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+
+            <div className="relative z-10 max-w-6xl mx-auto px-6">
+                {/* Header */}
+                <div className="text-center mb-16">
+                    <div
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border mb-6">
+                        <span className="text-sm text-foreground/70">Unsere Features</span>
+                    </div>
+                    <h2 className="font-display text-4xl md:text-5xl lg:text-6xl text-foreground mb-4">
+                        Warum <span className="gradient-text">dcs.lol</span>?
+                    </h2>
+                    <p className="text-lg text-foreground/50 max-w-2xl mx-auto text-balance">
+                        Der beste Discord-Link-Shortener. Punkt.
+                    </p>
+                </div>
+
+                {/* Feature Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {features.map((feature, index) => (
+                        <div
+                            key={feature.title}
+                            className="group relative p-8 rounded-2xl bg-card border border-border hover:border-primary/40 transition-all duration-300 card-glow overflow-hidden"
+                            style={{animationDelay: `${index * 100}ms`}}
+                        >
+                            {/* Gradient background on hover */}
+                            <div
+                                className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}/>
+
+                            <div className="relative z-10">
+                                <div
+                                    className={`w-14 h-14 rounded-2xl bg-card border border-border flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                                    <feature.icon className={`w-7 h-7 ${feature.iconColor}`}/>
+                                </div>
+                                <h3 className="text-xl font-semibold text-foreground mb-3">
+                                    {feature.title}
+                                </h3>
+                                <p className="text-foreground/50 leading-relaxed group-hover:text-foreground/70 transition-colors">
+                                    {feature.description}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
 };

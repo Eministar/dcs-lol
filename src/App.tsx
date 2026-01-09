@@ -5,6 +5,7 @@ import {Hero} from "./components/Hero";
 import {Features} from "./components/Features";
 import {Showcase} from "./components/Showcase";
 import {LastUrl} from "./components/LastUrl";
+import {ApiSection} from "./components/ApiSection";
 import {FAQ} from "./components/FAQ";
 import {CTA} from "./components/CTA";
 import {Footer} from "./components/Footer";
@@ -16,6 +17,7 @@ import Register from "./pages/Register";
 import Edit from "./pages/Edit";
 import TosPage from "./pages/TosPage";
 import PrivacyPage from "./pages/PrivacyPage";
+import ApiDocs from "./pages/ApiDocs";
 
 function HomePage() {
     const [linksOpen, setLinksOpen] = React.useState(false);
@@ -26,6 +28,7 @@ function HomePage() {
             <Features/>
             <Showcase/>
             <LastUrl openLinksModal={() => setLinksOpen(true)}/>
+            <ApiSection/>
             <FAQ/>
             <CTA/>
             <Footer/>
@@ -45,6 +48,7 @@ function App() {
                     <Route path="/edit" element={<Edit/>}/>
                     <Route path="/tos" element={<TosPage/>}/>
                     <Route path="/privacy" element={<PrivacyPage/>}/>
+                    <Route path="/docs/api" element={<ApiDocs/>}/>
                     <Route path="/redirect" element={<Redirect/>}/>
                     <Route path="/:shortCode" element={<Redirect/>}/>
                 </Routes>

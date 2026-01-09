@@ -99,6 +99,14 @@ export const Footer: React.FC = () => {
                                     Discord Support
                                 </a>
                             </li>
+                            <li>
+                                <RLink
+                                    to="/docs/api"
+                                    className="text-foreground/50 hover:text-foreground transition-colors"
+                                >
+                                    API Docs
+                                </RLink>
+                            </li>
                         </ul>
                     </div>
                 </div>

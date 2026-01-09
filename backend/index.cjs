@@ -479,6 +479,12 @@ app.post("/api/shorten", tightLimiter, async (req, res) => {
             return res.status(400).json({error: "Ungültige ID"});
         }
 
+        // Reserved routes check
+        const reservedRoutes = ['api', 'login', 'register', 'edit', 'tos', 'privacy', 'docs', 'health', 'redirect', 'support', 'about', 'terms', 'admin', 'dashboard', 'settings', 'profile', 'user', 'users', 'static', 'assets', 'public', 'uploads'];
+        if (reservedRoutes.includes(customId.toLowerCase())) {
+            return res.status(400).json({error: "Diese ID ist reserviert"});
+        }
+
         // Conflict check
         const [rows] = await pool.query("SELECT 1 FROM links WHERE custom_id = ? LIMIT 1", [customId]);
         if (Array.isArray(rows) && rows.length > 0) {
@@ -813,6 +819,736 @@ function timeSince(date) {
     if (minutes === 1) return "vor 1 Min";
     return `vor ${minutes} Min`;
 }
+
+// ============================================================================
+// PUBLIC API v1 - No Rate Limits, Full Access
+// ============================================================================
+
+// GET /api/v1/stats - Global statistics
+app.get('/api/v1/stats', async (req, res) => {
+    try {
+        const [linksCount] = await pool.query('SELECT COUNT(*) AS total FROM links');
+        const [clicksSum] = await pool.query('SELECT COALESCE(SUM(clicks), 0) AS total FROM links');
+        const [usersCount] = await pool.query('SELECT COUNT(*) AS total FROM users');
+        const [todayLinks] = await pool.query(
+            'SELECT COUNT(*) AS total FROM links WHERE DATE(created_at) = CURDATE()'
+        );
+        const [todayClicks] = await pool.query(
+            'SELECT COUNT(*) AS total FROM links WHERE DATE(created_at) = CURDATE()'
+        );
+        const [topLinks] = await pool.query(
+            'SELECT custom_id, clicks FROM links ORDER BY clicks DESC LIMIT 10'
+        );
+
+        res.json({
+            success: true,
+            data: {
+                totalLinks: linksCount[0]?.total || 0,
+                totalClicks: Number(clicksSum[0]?.total || 0),
+                totalUsers: usersCount[0]?.total || 0,
+                linksToday: todayLinks[0]?.total || 0,
+                topLinks: topLinks.map(l => ({id: l.custom_id, clicks: Number(l.clicks)})),
+                uptime: '99.9%',
+                version: '1.0.0',
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/stats error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/links - Get all links with advanced filtering
+app.get('/api/v1/links', async (req, res) => {
+    try {
+        const base = getBaseUrl(req);
+
+        // Pagination
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit) || 50));
+        const offset = (page - 1) * limit;
+
+        // Sorting
+        const sortFields = {clicks: 'clicks', id: 'custom_id', createdAt: 'created_at', created_at: 'created_at'};
+        const sortBy = sortFields[req.query.sortBy] || sortFields[req.query.sort] || 'created_at';
+        const order = (req.query.order || req.query.dir || 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+        // Filtering
+        const conditions = [];
+        const params = [];
+
+        // Search query (searches in id and url)
+        if (req.query.q || req.query.search) {
+            const q = (req.query.q || req.query.search).toString();
+            conditions.push('(custom_id LIKE ? OR original_url LIKE ?)');
+            params.push(`%${q}%`, `%${q}%`);
+        }
+
+        // Filter by exact ID
+        if (req.query.id) {
+            conditions.push('custom_id = ?');
+            params.push(req.query.id);
+        }
+
+        // Filter by clicks range
+        if (req.query.minClicks) {
+            conditions.push('clicks >= ?');
+            params.push(parseInt(req.query.minClicks));
+        }
+        if (req.query.maxClicks) {
+            conditions.push('clicks <= ?');
+            params.push(parseInt(req.query.maxClicks));
+        }
+
+        // Filter by date range
+        if (req.query.createdAfter || req.query.after) {
+            conditions.push('created_at >= ?');
+            params.push(new Date(req.query.createdAfter || req.query.after));
+        }
+        if (req.query.createdBefore || req.query.before) {
+            conditions.push('created_at <= ?');
+            params.push(new Date(req.query.createdBefore || req.query.before));
+        }
+
+        // Filter by user (if provided)
+        if (req.query.userId) {
+            conditions.push('user_id = ?');
+            params.push(parseInt(req.query.userId));
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        // Get total count
+        const [countRows] = await pool.query(`SELECT COUNT(*) AS cnt
+                                              FROM links ${whereClause}`, params);
+        const total = countRows[0]?.cnt || 0;
+
+        // Get data
+        const [rows] = await pool.query(
+            `SELECT custom_id, original_url, clicks, created_at, user_id
+             FROM links ${whereClause}
+             ORDER BY ${sortBy} ${order} 
+             LIMIT ?
+             OFFSET ?`,
+            [...params, limit, offset]
+        );
+
+        const items = (rows || []).map(l => ({
+            id: l.custom_id,
+            originalUrl: l.original_url,
+            shortUrl: `${base}/${l.custom_id}`,
+            clicks: Number(l.clicks || 0),
+            createdAt: new Date(l.created_at).toISOString(),
+            userId: l.user_id || null
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                    hasNext: page * limit < total,
+                    hasPrev: page > 1
+                },
+                filters: {
+                    sortBy: Object.keys(sortFields).find(k => sortFields[k] === sortBy) || 'createdAt',
+                    order: order.toLowerCase(),
+                    query: req.query.q || req.query.search || null
+                }
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/links/:id - Get single link with full details
+app.get('/api/v1/links/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const base = getBaseUrl(req);
+
+        const [rows] = await pool.query(
+            'SELECT custom_id, original_url, clicks, created_at, user_id FROM links WHERE custom_id = ? LIMIT 1',
+            [id]
+        );
+
+        const link = Array.isArray(rows) && rows[0];
+        if (!link) {
+            return res.status(404).json({success: false, error: 'Link not found'});
+        }
+
+        // Try to fetch Discord invite info
+        let discordInfo = null;
+        try {
+            const inviteMatch = link.original_url.match(/(?:discord\.gg\/|discord\.com\/invite\/)([A-Za-z0-9-_]+)/);
+            if (inviteMatch) {
+                const inviteCode = inviteMatch[1];
+                const response = await axios.get(
+                    `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true&with_expiration=true`
+                );
+                const data = response.data || {};
+                const guild = data.guild || {};
+
+                discordInfo = {
+                    serverName: guild.name || null,
+                    serverId: guild.id || null,
+                    memberCount: data.approximate_member_count || null,
+                    onlineCount: data.approximate_presence_count || null,
+                    serverIcon: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
+                    inviteCode: inviteCode,
+                    expiresAt: data.expires_at || null
+                };
+            }
+        } catch (e) {
+            // Discord API error, continue without discord info
+        }
+
+        res.json({
+            success: true,
+            data: {
+                id: link.custom_id,
+                originalUrl: link.original_url,
+                shortUrl: `${base}/${link.custom_id}`,
+                clicks: Number(link.clicks || 0),
+                createdAt: new Date(link.created_at).toISOString(),
+                userId: link.user_id || null,
+                discord: discordInfo
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links/:id error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/links/:id/stats - Get detailed stats for a link
+app.get('/api/v1/links/:id/stats', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const base = getBaseUrl(req);
+
+        const [rows] = await pool.query(
+            'SELECT custom_id, original_url, clicks, created_at, user_id FROM links WHERE custom_id = ? LIMIT 1',
+            [id]
+        );
+
+        const link = Array.isArray(rows) && rows[0];
+        if (!link) {
+            return res.status(404).json({success: false, error: 'Link not found'});
+        }
+
+        const createdAt = new Date(link.created_at);
+        const now = new Date();
+        const ageInDays = Math.max(1, Math.floor((now - createdAt) / (1000 * 60 * 60 * 24)));
+        const clicksPerDay = (Number(link.clicks) / ageInDays).toFixed(2);
+
+        res.json({
+            success: true,
+            data: {
+                id: link.custom_id,
+                shortUrl: `${base}/${link.custom_id}`,
+                totalClicks: Number(link.clicks || 0),
+                createdAt: createdAt.toISOString(),
+                ageInDays,
+                averageClicksPerDay: parseFloat(clicksPerDay),
+                lastUpdated: now.toISOString()
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links/:id/stats error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// POST /api/v1/links - Create a new shortened link
+app.post('/api/v1/links', async (req, res) => {
+    try {
+        let {url, originalUrl, customId, id} = req.body || {};
+        const targetUrl = url || originalUrl;
+        const targetId = customId || id;
+        const base = getBaseUrl(req);
+
+        // Normalize Discord invite URLs
+        let normalizedUrl = targetUrl;
+        if (typeof normalizedUrl === 'string') {
+            normalizedUrl = normalizedUrl.trim();
+            normalizedUrl = normalizedUrl.replace(/^http:\/\//, 'https://');
+            normalizedUrl = normalizedUrl.replace(/^https:\/\/discord\.com\/invite\//, 'https://discord.gg/');
+        }
+
+        // Validate URL
+        const isValid = typeof normalizedUrl === 'string' &&
+            (/^https:\/\/discord\.gg\/[a-zA-Z0-9]+$/.test(normalizedUrl) ||
+                /^https:\/\/discord\.com\/invite\/[a-zA-Z0-9]+$/.test(normalizedUrl));
+
+        if (!isValid) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid Discord URL',
+                message: 'URL must be a valid discord.gg or discord.com/invite link'
+            });
+        }
+
+        // Validate custom ID
+        if (!targetId || !/^[a-zA-Z0-9_-]{3,32}$/.test(targetId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid custom ID',
+                message: 'ID must be 3-32 characters (letters, numbers, underscore, hyphen)'
+            });
+        }
+
+        // Check for conflicts
+        const [existing] = await pool.query('SELECT 1 FROM links WHERE custom_id = ? LIMIT 1', [targetId]);
+        if (Array.isArray(existing) && existing.length > 0) {
+            return res.status(409).json({
+                success: false,
+                error: 'ID already exists',
+                message: `The ID "${targetId}" is already taken`
+            });
+        }
+
+        // Insert the link
+        await pool.query(
+            'INSERT INTO links (custom_id, original_url, clicks, user_id) VALUES (?, ?, 0, ?)',
+            [targetId, normalizedUrl, req.user?.id || null]
+        );
+
+        res.status(201).json({
+            success: true,
+            data: {
+                id: targetId,
+                originalUrl: normalizedUrl,
+                shortUrl: `${base}/${targetId}`,
+                clicks: 0,
+                createdAt: new Date().toISOString()
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links POST error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// DELETE /api/v1/links/:id - Delete a link (requires auth)
+app.delete('/api/v1/links/:id', requireAuth, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const [rows] = await pool.query('SELECT user_id FROM links WHERE custom_id = ? LIMIT 1', [id]);
+        const link = Array.isArray(rows) && rows[0];
+
+        if (!link) {
+            return res.status(404).json({success: false, error: 'Link not found'});
+        }
+
+        if (!link.user_id || link.user_id !== req.user.id) {
+            return res.status(403).json({success: false, error: 'Not authorized to delete this link'});
+        }
+
+        await pool.query('DELETE FROM links WHERE custom_id = ?', [id]);
+
+        res.json({success: true, message: 'Link deleted successfully'});
+    } catch (e) {
+        console.error('/api/v1/links DELETE error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// PATCH /api/v1/links/:id - Update a link (requires auth)
+app.patch('/api/v1/links/:id', requireAuth, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const {url, originalUrl, newId, customId} = req.body || {};
+        const base = getBaseUrl(req);
+
+        const [rows] = await pool.query(
+            'SELECT custom_id, original_url, user_id FROM links WHERE custom_id = ? LIMIT 1',
+            [id]
+        );
+        const link = Array.isArray(rows) && rows[0];
+
+        if (!link) {
+            return res.status(404).json({success: false, error: 'Link not found'});
+        }
+
+        if (!link.user_id || link.user_id !== req.user.id) {
+            return res.status(403).json({success: false, error: 'Not authorized to update this link'});
+        }
+
+        const updates = [];
+        const params = [];
+        let finalId = link.custom_id;
+        let finalUrl = link.original_url;
+
+        // Update URL
+        const targetUrl = url || originalUrl;
+        if (targetUrl) {
+            let normalizedUrl = targetUrl.trim().replace(/^http:\/\//, 'https://');
+            normalizedUrl = normalizedUrl.replace(/^https:\/\/discord\.com\/invite\//, 'https://discord.gg/');
+
+            if (!/^https:\/\/discord\.(gg|com\/invite)\/[a-zA-Z0-9]+$/.test(normalizedUrl)) {
+                return res.status(400).json({success: false, error: 'Invalid Discord URL'});
+            }
+
+            updates.push('original_url = ?');
+            params.push(normalizedUrl);
+            finalUrl = normalizedUrl;
+        }
+
+        // Update ID
+        const targetNewId = newId || customId;
+        if (targetNewId) {
+            if (!/^[a-zA-Z0-9_-]{3,32}$/.test(targetNewId)) {
+                return res.status(400).json({success: false, error: 'Invalid custom ID'});
+            }
+
+            const [conflict] = await pool.query('SELECT 1 FROM links WHERE custom_id = ? LIMIT 1', [targetNewId]);
+            if (Array.isArray(conflict) && conflict.length > 0) {
+                return res.status(409).json({success: false, error: 'ID already exists'});
+            }
+
+            updates.push('custom_id = ?');
+            params.push(targetNewId);
+            finalId = targetNewId;
+        }
+
+        if (updates.length === 0) {
+            return res.json({success: true, message: 'Nothing to update'});
+        }
+
+        params.push(id);
+        await pool.query(`UPDATE links
+                          SET ${updates.join(', ')}
+                          WHERE custom_id = ?`, params);
+
+        res.json({
+            success: true,
+            data: {
+                id: finalId,
+                originalUrl: finalUrl,
+                shortUrl: `${base}/${finalId}`
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links PATCH error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/users/:id/links - Get links for a specific user
+app.get('/api/v1/users/:id/links', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const base = getBaseUrl(req);
+
+        if (isNaN(userId)) {
+            return res.status(400).json({success: false, error: 'Invalid user ID'});
+        }
+
+        // Pagination
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+        const offset = (page - 1) * limit;
+
+        const [countRows] = await pool.query('SELECT COUNT(*) AS cnt FROM links WHERE user_id = ?', [userId]);
+        const total = countRows[0]?.cnt || 0;
+
+        const [rows] = await pool.query(
+            'SELECT custom_id, original_url, clicks, created_at FROM links WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            [userId, limit, offset]
+        );
+
+        const items = (rows || []).map(l => ({
+            id: l.custom_id,
+            originalUrl: l.original_url,
+            shortUrl: `${base}/${l.custom_id}`,
+            clicks: Number(l.clicks || 0),
+            createdAt: new Date(l.created_at).toISOString()
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                userId,
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/users/:id/links error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/search - Advanced search across all data
+app.get('/api/v1/search', async (req, res) => {
+    try {
+        const base = getBaseUrl(req);
+        const q = (req.query.q || req.query.query || '').toString().trim();
+
+        if (!q || q.length < 2) {
+            return res.status(400).json({
+                success: false,
+                error: 'Query too short',
+                message: 'Search query must be at least 2 characters'
+            });
+        }
+
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+
+        const [rows] = await pool.query(
+            `SELECT custom_id, original_url, clicks, created_at
+             FROM links
+             WHERE custom_id LIKE ?
+                OR original_url LIKE ?
+             ORDER BY clicks DESC LIMIT ?`,
+            [`%${q}%`, `%${q}%`, limit]
+        );
+
+        const items = (rows || []).map(l => ({
+            id: l.custom_id,
+            originalUrl: l.original_url,
+            shortUrl: `${base}/${l.custom_id}`,
+            clicks: Number(l.clicks || 0),
+            createdAt: new Date(l.created_at).toISOString()
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                query: q,
+                count: items.length,
+                items
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/search error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/top - Get top performing links
+app.get('/api/v1/top', async (req, res) => {
+    try {
+        const base = getBaseUrl(req);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+        const period = req.query.period || 'all'; // all, today, week, month
+
+        let dateFilter = '';
+        if (period === 'today') {
+            dateFilter = 'WHERE DATE(created_at) = CURDATE()';
+        } else if (period === 'week') {
+            dateFilter = 'WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+        } else if (period === 'month') {
+            dateFilter = 'WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)';
+        }
+
+        const [rows] = await pool.query(
+            `SELECT custom_id, original_url, clicks, created_at
+             FROM links ${dateFilter}
+             ORDER BY clicks DESC LIMIT ?`,
+            [limit]
+        );
+
+        const items = (rows || []).map((l, index) => ({
+            rank: index + 1,
+            id: l.custom_id,
+            originalUrl: l.original_url,
+            shortUrl: `${base}/${l.custom_id}`,
+            clicks: Number(l.clicks || 0),
+            createdAt: new Date(l.created_at).toISOString()
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                period,
+                items
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/top error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/recent - Get most recent links
+app.get('/api/v1/recent', async (req, res) => {
+    try {
+        const base = getBaseUrl(req);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+
+        const [rows] = await pool.query(
+            `SELECT custom_id, original_url, clicks, created_at
+             FROM links
+             ORDER BY created_at DESC LIMIT ?`,
+            [limit]
+        );
+
+        const items = (rows || []).map(l => ({
+            id: l.custom_id,
+            originalUrl: l.original_url,
+            shortUrl: `${base}/${l.custom_id}`,
+            clicks: Number(l.clicks || 0),
+            createdAt: new Date(l.created_at).toISOString()
+        }));
+
+        res.json({
+            success: true,
+            data: {items}
+        });
+    } catch (e) {
+        console.error('/api/v1/recent error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// POST /api/v1/links/:id/click - Track a click (alternative to /api/click/:id)
+app.post('/api/v1/links/:id/click', async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const [result] = await pool.query('UPDATE links SET clicks = clicks + 1 WHERE custom_id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({success: false, error: 'Link not found'});
+        }
+
+        // Get updated click count
+        const [rows] = await pool.query('SELECT clicks FROM links WHERE custom_id = ? LIMIT 1', [id]);
+        const clicks = rows[0]?.clicks || 0;
+
+        res.json({
+            success: true,
+            data: {
+                id,
+                clicks: Number(clicks),
+                trackedAt: new Date().toISOString()
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/links/:id/click error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/check/:id - Check if an ID is available
+app.get('/api/v1/check/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        if (!/^[a-zA-Z0-9_-]{3,32}$/.test(id)) {
+            return res.json({
+                success: true,
+                data: {
+                    id,
+                    available: false,
+                    reason: 'Invalid format (must be 3-32 chars, alphanumeric, underscore, hyphen)'
+                }
+            });
+        }
+
+        // Check reserved routes
+        const reserved = ['api', 'login', 'register', 'edit', 'tos', 'privacy', 'docs', 'health', 'redirect', 'support', 'about', 'terms'];
+        if (reserved.includes(id.toLowerCase())) {
+            return res.json({
+                success: true,
+                data: {
+                    id,
+                    available: false,
+                    reason: 'Reserved route'
+                }
+            });
+        }
+
+        const [rows] = await pool.query('SELECT 1 FROM links WHERE custom_id = ? LIMIT 1', [id]);
+        const exists = Array.isArray(rows) && rows.length > 0;
+
+        res.json({
+            success: true,
+            data: {
+                id,
+                available: !exists,
+                reason: exists ? 'Already taken' : null
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/check/:id error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/discord/:inviteCode - Get Discord server info
+app.get('/api/v1/discord/:inviteCode', async (req, res) => {
+    try {
+        const inviteCode = req.params.inviteCode;
+
+        const response = await axios.get(
+            `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true&with_expiration=true`
+        );
+
+        const data = response.data || {};
+        const guild = data.guild || {};
+        const channel = data.channel || {};
+
+        res.json({
+            success: true,
+            data: {
+                inviteCode,
+                server: {
+                    id: guild.id || null,
+                    name: guild.name || null,
+                    icon: guild.icon ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` : null,
+                    splash: guild.splash ? `https://cdn.discordapp.com/splashes/${guild.id}/${guild.splash}.png` : null,
+                    banner: guild.banner ? `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.png` : null,
+                    description: guild.description || null,
+                    features: guild.features || [],
+                    verificationLevel: guild.verification_level || 0,
+                    vanityUrlCode: guild.vanity_url_code || null,
+                    premiumSubscriptionCount: guild.premium_subscription_count || 0,
+                    nsfw: guild.nsfw || false,
+                    nsfwLevel: guild.nsfw_level || 0
+                },
+                channel: {
+                    id: channel.id || null,
+                    name: channel.name || null,
+                    type: channel.type || 0
+                },
+                memberCount: data.approximate_member_count || null,
+                onlineCount: data.approximate_presence_count || null,
+                expiresAt: data.expires_at || null,
+                inviter: data.inviter ? {
+                    id: data.inviter.id,
+                    username: data.inviter.username,
+                    avatar: data.inviter.avatar ? `https://cdn.discordapp.com/avatars/${data.inviter.id}/${data.inviter.avatar}.png` : null
+                } : null
+            }
+        });
+    } catch (e) {
+        if (e.response?.status === 404) {
+            return res.status(404).json({success: false, error: 'Invite not found or expired'});
+        }
+        console.error('/api/v1/discord/:inviteCode error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Failed to fetch Discord data'});
+    }
+});
+
+// ============================================================================
+// END PUBLIC API v1
+// ============================================================================
 
 // SPA Fallback for React Router (must be after all API routes)
 app.get('*', (req, res) => {

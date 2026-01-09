@@ -52,6 +52,12 @@ export const Header: React.FC = () => {
                         >
                             FAQ
                         </button>
+                        <RLink
+                            to="/docs/api"
+                            className="text-foreground/60 hover:text-foreground transition-colors text-sm font-medium"
+                        >
+                            API
+                        </RLink>
                         {user ? (
                             <div className="flex items-center gap-4">
                                 <RLink
@@ -125,6 +131,10 @@ export const Header: React.FC = () => {
                                     className="text-foreground font-medium py-2 text-left">
                                 FAQ
                             </button>
+                            <RLink to="/docs/api" onClick={() => setMenuOpen(false)}
+                                   className="text-foreground font-medium py-2">
+                                API
+                            </RLink>
                             {user ? (
                                 <>
                                     <div className="flex items-center gap-3 py-2 border-b border-border/50">

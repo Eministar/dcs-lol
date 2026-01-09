@@ -340,6 +340,22 @@ const translations: Translations = {
         "privacyPage.contactTitle": "Kontakt",
         "privacyPage.contactText": "Bei Fragen zum Datenschutz erreichst du uns unter:",
 
+        // API Documentation
+        "api.title": "API Dokumentation",
+        "api.description": "Voller Zugriff auf alle Links, Statistiken und Discord-Server-Informationen.",
+        "api.noRateLimits": "Keine Rate Limits",
+        "api.noApiKeys": "Keine API-Keys",
+        "api.allFiltersCombined": "Alle Filter kombinierbar",
+        "api.quickStart": "Schnellstart",
+        "api.exampleRequest": "Beispiel-Anfrage",
+        "api.allEndpoints": "Alle Endpoints",
+        "api.clickForDetails": "Klicke auf einen Endpoint für Details",
+        "api.urlParameters": "URL Parameter",
+        "api.required": "erforderlich",
+        "api.example": "Beispiel",
+        "api.errorHandling": "Fehlerbehandlung",
+        "api.back": "Zurück",
+
         // ...existing code...
     },
     en: {
@@ -668,6 +684,22 @@ const translations: Translations = {
 
         "privacyPage.contactTitle": "Contact",
         "privacyPage.contactText": "For privacy-related questions, contact us at:",
+
+        // API Documentation
+        "api.title": "API Documentation",
+        "api.description": "Full access to all links, statistics, and Discord server information.",
+        "api.noRateLimits": "No Rate Limits",
+        "api.noApiKeys": "No API Keys",
+        "api.allFiltersCombined": "All Filters Combinable",
+        "api.quickStart": "Quick Start",
+        "api.exampleRequest": "Example Request",
+        "api.allEndpoints": "All Endpoints",
+        "api.clickForDetails": "Click on an endpoint for details",
+        "api.urlParameters": "URL Parameters",
+        "api.required": "required",
+        "api.example": "Example",
+        "api.errorHandling": "Error Handling",
+        "api.back": "Back",
 
         // ...existing code...
     },

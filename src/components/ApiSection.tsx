@@ -110,6 +110,11 @@ export const ApiSection: React.FC = () => {
                             ? "16+ Endpoints • Vollständige Dokumentation • Code-Beispiele"
                             : "16+ Endpoints • Complete Documentation • Code Examples"}
                     </p>
+                    <p className="mt-2 text-xs text-muted-foreground/70">
+                        {isDE
+                            ? "Bei Nutzung der API ist die Angabe \"Powered by DCS.lol API\" erforderlich"
+                            : "Attribution \"Powered by DCS.lol API\" required when using the API"}
+                    </p>
                 </div>
             </div>
         </section>

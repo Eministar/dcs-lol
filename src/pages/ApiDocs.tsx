@@ -988,6 +988,86 @@ export function LinkStats({ linkId }: { linkId: string }) {
                     ))}
                 </div>
 
+                {/* API Terms of Service */}
+                <div className="mt-16 p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                    <h2 className="text-2xl font-semibold mb-4 text-amber-400">
+                        {isDE ? "API Nutzungsbedingungen" : "API Terms of Service"}
+                    </h2>
+                    <div className="space-y-4">
+                        <div className="p-4 rounded-xl bg-background border border-amber-500/30">
+                            <div className="flex items-start gap-3">
+                                <span className="text-amber-400 text-xl">⚠️</span>
+                                <div>
+                                    <h3 className="font-semibold text-foreground mb-2">
+                                        {isDE ? "Pflichtangabe bei Nutzung" : "Required Attribution"}
+                                    </h3>
+                                    <p className="text-muted-foreground">
+                                        {isDE
+                                            ? "Bei Verwendung der DCS.lol API muss auf jeder Seite, die API-Daten anzeigt, folgende Angabe sichtbar sein:"
+                                            : "When using the DCS.lol API, the following attribution must be visible on every page displaying API data:"}
+                                    </p>
+                                    <div className="mt-4 p-4 rounded-lg bg-card border border-border">
+                                        <code className="text-primary font-mono">
+                                            Powered by{" "}
+                                            <a href="https://dcs.lol"
+                                               className="underline text-accent hover:text-accent/80">
+                                                DCS.lol API
+                                            </a>
+                                        </code>
+                                    </div>
+                                    <p className="text-muted-foreground text-sm mt-3">
+                                        {isDE
+                                            ? "Der Link muss klickbar sein und zu https://dcs.lol führen."
+                                            : "The link must be clickable and lead to https://dcs.lol."}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-background border border-border">
+                            <h3 className="font-semibold text-foreground mb-2">
+                                {isDE ? "Beispiel-Implementierung" : "Example Implementation"}
+                            </h3>
+                            <pre className="text-sm font-mono text-foreground/80 overflow-x-auto">
+{`<!-- HTML -->
+<p>Powered by <a href="https://dcs.lol">DCS.lol API</a></p>
+
+// React/JSX
+<p>Powered by <a href="https://dcs.lol">DCS.lol API</a></p>
+
+// Markdown
+Powered by [DCS.lol API](https://dcs.lol)`}
+                            </pre>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                <span className="text-emerald-400 font-semibold">✓ {isDE ? "Erlaubt" : "Allowed"}</span>
+                                <ul className="mt-2 space-y-1 text-muted-foreground">
+                                    <li>{isDE ? "• Kommerzielle Nutzung mit Attribution" : "• Commercial use with attribution"}</li>
+                                    <li>{isDE ? "• Integration in eigene Projekte" : "• Integration into own projects"}</li>
+                                    <li>{isDE ? "• Unbegrenzte API-Anfragen" : "• Unlimited API requests"}</li>
+                                </ul>
+                            </div>
+                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                                <span
+                                    className="text-red-400 font-semibold">✗ {isDE ? "Nicht erlaubt" : "Not Allowed"}</span>
+                                <ul className="mt-2 space-y-1 text-muted-foreground">
+                                    <li>{isDE ? "• Nutzung ohne Attribution" : "• Use without attribution"}</li>
+                                    <li>{isDE ? "• Entfernen oder Verstecken der Attribution" : "• Removing or hiding attribution"}</li>
+                                    <li>{isDE ? "• Weiterverkauf der API-Daten" : "• Reselling API data"}</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <p className="text-muted-foreground text-sm">
+                            {isDE
+                                ? "Bei Verstoß gegen diese Nutzungsbedingungen behalten wir uns vor, den Zugang zur API zu sperren. Bei Fragen kontaktiere uns auf Discord."
+                                : "Violation of these terms may result in API access being revoked. For questions, contact us on Discord."}
+                        </p>
+                    </div>
+                </div>
+
                 {/* Error Handling */}
                 <div className="mt-16 p-6 rounded-2xl bg-red-500/5 border border-red-500/20">
                     <h2 className="text-2xl font-semibold mb-4 text-red-400">{isDE ? "Fehlerbehandlung" : "Error Handling"}</h2>

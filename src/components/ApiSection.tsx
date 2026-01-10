@@ -107,8 +107,8 @@ export const ApiSection: React.FC = () => {
                     </RLink>
                     <p className="mt-4 text-sm text-muted-foreground">
                         {isDE
-                            ? "16+ Endpoints • Vollständige Dokumentation • Code-Beispiele"
-                            : "16+ Endpoints • Complete Documentation • Code Examples"}
+                            ? "25+ Endpoints • Vollständige Dokumentation • Code-Beispiele"
+                            : "25+ Endpoints • Complete Documentation • Code Examples"}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground/70">
                         {isDE

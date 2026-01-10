@@ -4,6 +4,7 @@ import {Header} from "./components/Header";
 import {Hero} from "./components/Hero";
 import {Features} from "./components/Features";
 import {Showcase} from "./components/Showcase";
+import {Leaderboard} from "./components/Leaderboard";
 import {LastUrl} from "./components/LastUrl";
 import {ApiSection} from "./components/ApiSection";
 import {FAQ} from "./components/FAQ";
@@ -27,6 +28,7 @@ function HomePage() {
             <Hero/>
             <Features/>
             <Showcase/>
+            <Leaderboard/>
             <LastUrl openLinksModal={() => setLinksOpen(true)}/>
             <ApiSection/>
             <FAQ/>

@@ -432,12 +432,19 @@ app.post("/api/click/:id", async (req, res) => {
         const id = req.params.id;
         const [result] = await pool.query("UPDATE links SET clicks = clicks + 1 WHERE custom_id = ?", [id]);
         if (result.affectedRows === 0) return res.status(404).json({error: "Nicht gefunden"});
+
+        // Get updated click count for milestone check
+        const [rows] = await pool.query("SELECT clicks FROM links WHERE custom_id = ? LIMIT 1", [id]);
+        const clicks = rows && rows[0] ? Number(rows[0].clicks) : 0;
+
         // Webhook best-effort
         try {
-            sendWebhookEvent('link.clicked', {id, at: new Date().toISOString()});
+            sendWebhookEvent('link.clicked', {id, clicks, at: new Date().toISOString()});
+            // Check for milestones
+            checkMilestone(id, clicks);
         } catch (e) {
         }
-        res.json({ok: true});
+        res.json({ok: true, clicks});
     } catch (e) {
         res.status(500).json({error: "Serverfehler"});
     }
@@ -565,11 +572,85 @@ app.get("/api/info/:id", async (req, res) => {
 
 function loadWebhooks() {
     if (!fs.existsSync(WEBHOOK_PATH)) return [];
-    return JSON.parse(fs.readFileSync(WEBHOOK_PATH));
+    try {
+        return JSON.parse(fs.readFileSync(WEBHOOK_PATH));
+    } catch {
+        return [];
+    }
 }
 
 function saveWebhooks(webhooks) {
     fs.writeFileSync(WEBHOOK_PATH, JSON.stringify(webhooks, null, 2));
+}
+
+// Map internal event types to webhook event IDs
+const eventTypeMap = {
+    'link.created': 'link_created',
+    'link.clicked': 'link_clicked',
+    'link.milestone': 'link_milestone',
+    'server.featured': 'server_featured',
+    'daily.stats': 'daily_stats'
+};
+
+// Format webhook payload based on format type
+function formatWebhookPayload(hook, type, payload, timestamp) {
+    const format = hook.format || 'custom';
+
+    if (format === 'discord') {
+        // Discord embed format
+        const color = type.includes('created') ? 0x22c55e : type.includes('clicked') ? 0x8b5cf6 : 0x3b82f6;
+        const title = type === 'link.created' ? '🔗 Neuer Link erstellt'
+            : type === 'link.clicked' ? '📊 Link geklickt'
+                : type === 'link.milestone' ? '🎉 Meilenstein erreicht'
+                    : '📢 DCS.lol Event';
+
+        const fields = [];
+        if (payload.id) fields.push({name: 'Link ID', value: payload.id, inline: true});
+        if (payload.shortUrl) fields.push({name: 'URL', value: payload.shortUrl, inline: true});
+        if (payload.clicks !== undefined) fields.push({name: 'Klicks', value: String(payload.clicks), inline: true});
+        if (payload.originalUrl) fields.push({name: 'Original', value: payload.originalUrl, inline: false});
+
+        return {
+            embeds: [{
+                title,
+                color,
+                fields,
+                timestamp,
+                footer: {text: 'DCS.lol Webhook'}
+            }]
+        };
+    }
+
+    if (format === 'slack') {
+        // Slack format
+        const emoji = type === 'link.created' ? ':link:'
+            : type === 'link.clicked' ? ':chart_with_upwards_trend:'
+                : ':bell:';
+        const text = type === 'link.created'
+            ? `${emoji} *Neuer Link erstellt*: ${payload.shortUrl || payload.id}`
+            : type === 'link.clicked'
+                ? `${emoji} *Link geklickt*: ${payload.id}`
+                : `${emoji} *DCS.lol Event*`;
+
+        return {
+            text,
+            blocks: [
+                {
+                    type: 'section',
+                    text: {type: 'mrkdwn', text}
+                },
+                {
+                    type: 'context',
+                    elements: [
+                        {type: 'mrkdwn', text: `*ID:* ${payload.id || 'N/A'} | *Klicks:* ${payload.clicks ?? 'N/A'}`}
+                    ]
+                }
+            ]
+        };
+    }
+
+    // Custom JSON format (default)
+    return {type, timestamp, payload};
 }
 
 // Send webhooks (fire-and-forget) for events like link.created / link.clicked
@@ -577,14 +658,29 @@ function sendWebhookEvent(type, payload) {
     try {
         const webhooks = loadWebhooks();
         if (!Array.isArray(webhooks) || webhooks.length === 0) return;
-        const body = {type, timestamp: new Date().toISOString(), payload};
+
+        const eventId = eventTypeMap[type] || type.replace('.', '_');
+        const timestamp = new Date().toISOString();
+
         webhooks.forEach(async (hook) => {
             try {
                 if (!hook || !hook.url) return;
-                await axios.post(hook.url, body, {headers: {'Content-Type': 'application/json'}});
+                // Skip inactive webhooks
+                if (hook.active === false) return;
+                // Check if webhook is subscribed to this event
+                if (hook.events && Array.isArray(hook.events) && hook.events.length > 0) {
+                    if (!hook.events.includes(eventId)) return;
+                }
+
+                const body = formatWebhookPayload(hook, type, payload, timestamp);
+                await axios.post(hook.url, body, {
+                    headers: {'Content-Type': 'application/json'},
+                    timeout: 5000
+                });
+
                 // Update counters best-effort
                 hook.totalCalls = (hook.totalCalls || 0) + 1;
-                hook.lastTriggered = new Date().toISOString();
+                hook.lastTriggered = timestamp;
                 saveWebhooks(webhooks);
             } catch (e) {
                 if (process.env.NODE_ENV !== 'production') {
@@ -597,6 +693,14 @@ function sendWebhookEvent(type, payload) {
     }
 }
 
+// Check for milestones and trigger webhook
+function checkMilestone(id, clicks) {
+    const milestones = [100, 500, 1000, 5000, 10000, 50000, 100000];
+    if (milestones.includes(clicks)) {
+        sendWebhookEvent('link.milestone', {id, clicks, milestone: clicks, at: new Date().toISOString()});
+    }
+}
+
 app.get("/api/webhooks", (req, res) => {
     res.json(loadWebhooks());
 });
@@ -604,7 +708,13 @@ app.get("/api/webhooks", (req, res) => {
 // Add webhook
 app.post("/api/webhooks", tightLimiter, (req, res) => {
     const webhooks = loadWebhooks();
-    const newHook = {...req.body, id: Date.now().toString(), totalCalls: 0};
+    const newHook = {
+        ...req.body,
+        id: Date.now().toString(),
+        totalCalls: 0,
+        active: req.body.active !== false,
+        createdAt: new Date().toISOString()
+    };
     webhooks.push(newHook);
     saveWebhooks(webhooks);
     res.json(newHook);
@@ -635,16 +745,68 @@ app.post("/api/webhooks/:id/test", tightLimiter, async (req, res) => {
     if (!hook) return res.status(404).json({error: "Webhook nicht gefunden"});
 
     try {
-        const result = await axios.post(hook.url, {
-            content: `🔔 Testnachricht vom Webhook "${hook.name}"`,
+        let testPayload;
+        const format = hook.format || 'custom';
+
+        if (format === 'discord') {
+            testPayload = {
+                embeds: [{
+                    title: '🔔 Test erfolgreich!',
+                    description: `Testnachricht vom Webhook "${hook.name}"`,
+                    color: 0x8b5cf6,
+                    fields: [
+                        {name: 'Webhook', value: hook.name, inline: true},
+                        {name: 'Format', value: 'Discord', inline: true},
+                        {name: 'Events', value: (hook.events || []).join(', ') || 'Alle', inline: false}
+                    ],
+                    timestamp: new Date().toISOString(),
+                    footer: {text: 'DCS.lol Webhook Test'}
+                }]
+            };
+        } else if (format === 'slack') {
+            testPayload = {
+                text: `🔔 *Test erfolgreich!* - Webhook "${hook.name}"`,
+                blocks: [
+                    {
+                        type: 'section',
+                        text: {type: 'mrkdwn', text: `🔔 *Test erfolgreich!*\nWebhook "${hook.name}" funktioniert.`}
+                    },
+                    {
+                        type: 'context',
+                        elements: [
+                            {
+                                type: 'mrkdwn',
+                                text: `*Format:* Slack | *Events:* ${(hook.events || []).join(', ') || 'Alle'}`
+                            }
+                        ]
+                    }
+                ]
+            };
+        } else {
+            testPayload = {
+                type: 'test',
+                timestamp: new Date().toISOString(),
+                payload: {
+                    message: `Testnachricht vom Webhook "${hook.name}"`,
+                    webhookId: hook.id,
+                    webhookName: hook.name,
+                    events: hook.events || []
+                }
+            };
+        }
+
+        const result = await axios.post(hook.url, testPayload, {
+            headers: {'Content-Type': 'application/json'},
+            timeout: 5000
         });
 
-        hook.totalCalls += 1;
+        hook.totalCalls = (hook.totalCalls || 0) + 1;
         hook.lastTriggered = new Date().toISOString();
         saveWebhooks(webhooks);
         res.json({success: true, status: result.status});
     } catch (e) {
-        res.status(500).json({error: "Fehler beim Senden des Webhooks"});
+        console.error('Webhook test error:', e?.message || e);
+        res.status(500).json({error: "Fehler beim Senden des Webhooks", details: e?.message});
     }
 });
 
@@ -1548,6 +1710,204 @@ app.get('/api/v1/discord/:inviteCode', async (req, res) => {
 
 // ============================================================================
 // END PUBLIC API v1
+// ============================================================================
+
+// ============================================================================
+// SHOWCASE API v1
+// ============================================================================
+
+// GET /api/v1/showcase - Get all showcase entries
+app.get('/api/v1/showcase', async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+        const offset = (page - 1) * limit;
+
+        // Filtering
+        const conditions = [];
+        const params = [];
+
+        if (req.query.category) {
+            conditions.push('category = ?');
+            params.push(req.query.category);
+        }
+        if (req.query.featured === 'true') {
+            conditions.push('featured = 1');
+        }
+        if (req.query.verified === 'true') {
+            conditions.push('verified = 1');
+        }
+        if (req.query.q || req.query.search) {
+            const q = (req.query.q || req.query.search).toString();
+            conditions.push('(name LIKE ? OR description LIKE ?)');
+            params.push(`%${q}%`, `%${q}%`);
+        }
+
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+        // Get total
+        const [countRows] = await pool.query(`SELECT COUNT(*) AS cnt FROM showcase ${whereClause}`, params);
+        const total = countRows[0]?.cnt || 0;
+
+        // Get data
+        const [rows] = await pool.query(
+            `SELECT id, name, description, invite_link, category, tags, logo_url, featured, verified, created_at, owner_id 
+             FROM showcase ${whereClause} 
+             ORDER BY featured DESC, created_at DESC 
+             LIMIT ? OFFSET ?`,
+            [...params, limit, offset]
+        );
+
+        const items = (rows || []).map(r => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            inviteLink: r.invite_link,
+            category: r.category,
+            tags: (() => {
+                try {
+                    return JSON.parse(r.tags || '[]');
+                } catch {
+                    return [];
+                }
+            })(),
+            logoUrl: r.logo_url,
+            featured: Boolean(r.featured),
+            verified: Boolean(r.verified),
+            createdAt: new Date(r.created_at).toISOString(),
+            ownerId: r.owner_id || null
+        }));
+
+        res.json({
+            success: true,
+            data: {
+                items,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                    hasNext: page * limit < total,
+                    hasPrev: page > 1
+                }
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/showcase error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/showcase/:id - Get single showcase entry
+app.get('/api/v1/showcase/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const [rows] = await pool.query(
+            'SELECT id, name, description, invite_link, category, tags, logo_url, featured, verified, created_at, owner_id FROM showcase WHERE id = ? LIMIT 1',
+            [id]
+        );
+
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({success: false, error: 'Showcase entry not found'});
+        }
+
+        const r = rows[0];
+        res.json({
+            success: true,
+            data: {
+                id: r.id,
+                name: r.name,
+                description: r.description,
+                inviteLink: r.invite_link,
+                category: r.category,
+                tags: (() => {
+                    try {
+                        return JSON.parse(r.tags || '[]');
+                    } catch {
+                        return [];
+                    }
+                })(),
+                logoUrl: r.logo_url,
+                featured: Boolean(r.featured),
+                verified: Boolean(r.verified),
+                createdAt: new Date(r.created_at).toISOString(),
+                ownerId: r.owner_id || null
+            }
+        });
+    } catch (e) {
+        console.error('/api/v1/showcase/:id error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/showcase/categories - Get all categories with counts
+app.get('/api/v1/showcase/categories', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            'SELECT category, COUNT(*) as count FROM showcase GROUP BY category ORDER BY count DESC'
+        );
+
+        const categories = (rows || []).map(r => ({
+            name: r.category,
+            count: Number(r.count)
+        }));
+
+        res.json({
+            success: true,
+            data: {categories}
+        });
+    } catch (e) {
+        console.error('/api/v1/showcase/categories error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// GET /api/v1/showcase/featured - Get featured showcase entries
+app.get('/api/v1/showcase/featured', async (req, res) => {
+    try {
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+
+        const [rows] = await pool.query(
+            `SELECT id, name, description, invite_link, category, tags, logo_url, featured, verified, created_at 
+             FROM showcase 
+             WHERE featured = 1 
+             ORDER BY created_at DESC 
+             LIMIT ?`,
+            [limit]
+        );
+
+        const items = (rows || []).map(r => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            inviteLink: r.invite_link,
+            category: r.category,
+            tags: (() => {
+                try {
+                    return JSON.parse(r.tags || '[]');
+                } catch {
+                    return [];
+                }
+            })(),
+            logoUrl: r.logo_url,
+            featured: Boolean(r.featured),
+            verified: Boolean(r.verified),
+            createdAt: new Date(r.created_at).toISOString()
+        }));
+
+        res.json({
+            success: true,
+            data: {items}
+        });
+    } catch (e) {
+        console.error('/api/v1/showcase/featured error:', e?.message || e);
+        res.status(500).json({success: false, error: 'Internal server error'});
+    }
+});
+
+// ============================================================================
+// END SHOWCASE API v1
 // ============================================================================
 
 // SPA Fallback for React Router (must be after all API routes)

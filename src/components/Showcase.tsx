@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {AlertCircle, CheckCircle, Crown, Image, Link2, Star, Upload, X} from 'lucide-react';
+import {AlertCircle, CheckCircle, Crown, Eye, Flag, Heart, Image, Link2, Search, Star, Upload, X} from 'lucide-react';
 import {useLanguage} from '../contexts/LanguageContext';
+import {useAuth} from '../contexts/AuthContext';
 
 interface ServerData {
     name: string;
@@ -22,6 +23,11 @@ interface ShowcaseEntry {
     createdAt: string;
     featured: boolean;
     verified: boolean;
+    memberCount?: number;
+    views?: number;
+    avgRating?: number;
+    ratingCount?: number;
+    favoriteCount?: number;
 }
 
 const categories = [
@@ -37,6 +43,7 @@ const categories = [
 
 export const Showcase: React.FC = () => {
     const {t} = useLanguage();
+    const {user} = useAuth();
 
     const [entries, setEntries] = useState<ShowcaseEntry[]>([]);
     const [showUploadForm, setShowUploadForm] = useState(false);
@@ -52,6 +59,20 @@ export const Showcase: React.FC = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    // New state for rating and details
+    const [selectedServer, setSelectedServer] = useState<ShowcaseEntry | null>(null);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [userRating, setUserRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewText, setReviewText] = useState('');
+    const [ratingLoading, setRatingLoading] = useState(false);
+    const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set());
+    const [filterCategory, setFilterCategory] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState<'newest' | 'rating' | 'views' | 'favorites'>('newest');
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportReason, setReportReason] = useState('');
 
     useEffect(() => {
         fetch('/api/showcase')
@@ -94,6 +115,111 @@ export const Showcase: React.FC = () => {
 
     const validateDcsLink = (link: string) =>
         /^dcs\.lol\/[A-Za-z0-9_-]+$/.test(link);
+
+    // Handle rating submission
+    const handleRateServer = async () => {
+        if (!user || !selectedServer || userRating === 0) return;
+        setRatingLoading(true);
+        try {
+            const res = await fetch(`/api/showcase/${selectedServer.id}/rate`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({rating: userRating, review: reviewText})
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setEntries(prev => prev.map(e =>
+                    e.id === selectedServer.id
+                        ? {...e, avgRating: data.avgRating, ratingCount: data.ratingCount}
+                        : e
+                ));
+                setShowRatingModal(false);
+                setUserRating(0);
+                setReviewText('');
+            }
+        } catch (err) {
+            console.error('Rating error:', err);
+        } finally {
+            setRatingLoading(false);
+        }
+    };
+
+    // Handle favorite toggle
+    const handleToggleFavorite = async (serverId: string) => {
+        if (!user) return;
+        try {
+            const res = await fetch(`/api/showcase/${serverId}/favorite`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUserFavorites(prev => {
+                    const next = new Set(prev);
+                    if (data.favorited) {
+                        next.add(serverId);
+                    } else {
+                        next.delete(serverId);
+                    }
+                    return next;
+                });
+                setEntries(prev => prev.map(e =>
+                    e.id === serverId
+                        ? {...e, favoriteCount: (e.favoriteCount || 0) + (data.favorited ? 1 : -1)}
+                        : e
+                ));
+            }
+        } catch (err) {
+            console.error('Favorite error:', err);
+        }
+    };
+
+    // Handle report submission
+    const handleReportServer = async () => {
+        if (!user || !selectedServer || !reportReason) return;
+        try {
+            const res = await fetch(`/api/showcase/${selectedServer.id}/report`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
+                body: JSON.stringify({reason: reportReason})
+            });
+            if (res.ok) {
+                setShowReportModal(false);
+                setReportReason('');
+                alert(t('reportSuccess') || 'Danke für deine Meldung!');
+            }
+        } catch (err) {
+            console.error('Report error:', err);
+        }
+    };
+
+    // Filter and sort entries
+    const filteredEntries = entries
+        .filter(e => {
+            if (filterCategory && e.category !== filterCategory) return false;
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                return e.name.toLowerCase().includes(q) ||
+                    e.description.toLowerCase().includes(q) ||
+                    e.tags.some(t => t.toLowerCase().includes(q));
+            }
+            return true;
+        })
+        .sort((a, b) => {
+            if (a.featured !== b.featured) return a.featured ? -1 : 1;
+            switch (sortBy) {
+                case 'rating':
+                    return (b.avgRating || 0) - (a.avgRating || 0);
+                case 'views':
+                    return (b.views || 0) - (a.views || 0);
+                case 'favorites':
+                    return (b.favoriteCount || 0) - (a.favoriteCount || 0);
+                default:
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }
+        });
 
     const addTag = (tag: string) => {
         if (tag && !serverData.tags.includes(tag) && serverData.tags.length < 5) {
@@ -232,9 +358,73 @@ export const Showcase: React.FC = () => {
                     </button>
                 </div>
 
+                {/* Search and Filters */}
+                <div className="mb-10 space-y-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Search */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                placeholder={t('searchServers') || 'Server suchen...'}
+                                className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            />
+                        </div>
+
+                        {/* Sort */}
+                        <select
+                            value={sortBy}
+                            onChange={e => setSortBy(e.target.value as 'newest' | 'rating' | 'views' | 'favorites')}
+                            className="px-4 py-3 bg-card border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        >
+                            <option value="newest">{t('sortNewest') || 'Neueste'}</option>
+                            <option value="rating">{t('sortRating') || 'Beste Bewertung'}</option>
+                            <option value="views">{t('sortViews') || 'Meiste Aufrufe'}</option>
+                            <option value="favorites">{t('sortFavorites') || 'Beliebteste'}</option>
+                        </select>
+                    </div>
+
+                    {/* Category Filter */}
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => setFilterCategory('')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                !filterCategory
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-card text-muted-foreground hover:bg-accent border border-border'
+                            }`}
+                        >
+                            {t('all') || 'Alle'}
+                        </button>
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setFilterCategory(cat)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    filterCategory === cat
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'bg-card text-muted-foreground hover:bg-accent border border-border'
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Entries Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-                    {entries.map((entry, idx) => (
+                    {filteredEntries.length === 0 ? (
+                        <div className="col-span-full text-center py-12">
+                            <p className="text-muted-foreground text-lg">
+                                {searchQuery || filterCategory
+                                    ? (t('noServersFound') || 'Keine Server gefunden')
+                                    : (t('noServersYet') || 'Noch keine Server vorhanden')}
+                            </p>
+                        </div>
+                    ) : filteredEntries.map((entry, idx) => (
                         <article
                             key={entry.id}
                             className="group relative bg-card border border-border rounded-2xl p-6 hover:border-primary/30 transition-all duration-500 hover:-translate-y-1"
@@ -248,6 +438,41 @@ export const Showcase: React.FC = () => {
                                     <span>FEATURED</span>
                                 </div>
                             )}
+
+                            {/* Action Buttons */}
+                            <div
+                                className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {user && (
+                                    <>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleToggleFavorite(entry.id);
+                                            }}
+                                            className={`p-2 rounded-lg transition-all ${
+                                                userFavorites.has(entry.id)
+                                                    ? 'bg-red-500/20 text-red-500'
+                                                    : 'bg-accent hover:bg-accent/80 text-muted-foreground'
+                                            }`}
+                                            title={t('favorite') || 'Favorisieren'}
+                                        >
+                                            <Heart
+                                                className={`w-4 h-4 ${userFavorites.has(entry.id) ? 'fill-current' : ''}`}/>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedServer(entry);
+                                                setShowReportModal(true);
+                                            }}
+                                            className="p-2 rounded-lg bg-accent hover:bg-accent/80 text-muted-foreground transition-all"
+                                            title={t('report') || 'Melden'}
+                                        >
+                                            <Flag className="w-4 h-4"/>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
 
                             {/* Header */}
                             <div className="flex items-center gap-4 mb-4">
@@ -264,9 +489,16 @@ export const Showcase: React.FC = () => {
                                         )}
                                     </h3>
                                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                                        <span>{new Date(entry.createdAt).toLocaleDateString()}</span>
-                                        <span className="text-border">•</span>
                                         <span>{entry.category}</span>
+                                        {entry.views !== undefined && entry.views > 0 && (
+                                            <>
+                                                <span className="text-border">•</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Eye className="w-3 h-3"/>
+                                                    {entry.views}
+                                                </span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -283,7 +515,8 @@ export const Showcase: React.FC = () => {
                                     {entry.tags.map((tag, i) => (
                                         <span
                                             key={i}
-                                            className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-lg"
+                                            className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-lg cursor-pointer hover:bg-primary/20"
+                                            onClick={() => setSearchQuery(tag)}
                                         >
                       {tag}
                     </span>
@@ -291,16 +524,33 @@ export const Showcase: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Footer */}
+                            {/* Footer with Rating */}
                             <div className="flex items-center justify-between pt-4 border-t border-border">
                                 <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => (
                                         <Star
                                             key={i}
-                                            className={`w-4 h-4 ${i < 4 ? 'text-primary fill-primary' : 'text-muted'}`}
+                                            className={`w-4 h-4 ${i < Math.round(entry.avgRating || 0) ? 'text-primary fill-primary' : 'text-muted'}`}
                                         />
                                     ))}
-                                    <span className="text-muted-foreground text-sm ml-2">4.5</span>
+                                    <span className="text-muted-foreground text-sm ml-2">
+                                        {entry.avgRating?.toFixed(1) || '0.0'}
+                                        {entry.ratingCount !== undefined && entry.ratingCount > 0 && (
+                                            <span className="text-xs"> ({entry.ratingCount})</span>
+                                        )}
+                                    </span>
+                                    {user && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedServer(entry);
+                                                setShowRatingModal(true);
+                                            }}
+                                            className="ml-2 text-xs text-primary hover:underline"
+                                        >
+                                            {t('rate') || 'Bewerten'}
+                                        </button>
+                                    )}
                                 </div>
                                 <a
                                     href={`https://${entry.inviteLink}`}
@@ -573,6 +823,144 @@ export const Showcase: React.FC = () => {
                                     </form>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Rating Modal */}
+                {showRatingModal && selectedServer && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+                            onClick={() => setShowRatingModal(false)}
+                        />
+                        <div
+                            className="relative w-full max-w-md bg-card rounded-2xl border border-border shadow-2xl p-6">
+                            <button
+                                onClick={() => setShowRatingModal(false)}
+                                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-accent transition-colors"
+                            >
+                                <X className="w-5 h-5 text-muted-foreground"/>
+                            </button>
+
+                            <div className="text-center mb-6">
+                                <img
+                                    src={selectedServer.logoUrl}
+                                    alt={selectedServer.name}
+                                    className="w-16 h-16 rounded-xl object-cover mx-auto mb-4 border border-border"
+                                />
+                                <h3 className="text-xl font-semibold text-foreground">
+                                    {t('rateServer') || 'Server bewerten'}
+                                </h3>
+                                <p className="text-muted-foreground">{selectedServer.name}</p>
+                            </div>
+
+                            {/* Star Rating */}
+                            <div className="flex justify-center gap-2 mb-6">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setUserRating(star)}
+                                        onMouseEnter={() => setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        className="p-1 transition-transform hover:scale-110"
+                                    >
+                                        <Star
+                                            className={`w-10 h-10 transition-colors ${
+                                                star <= (hoverRating || userRating)
+                                                    ? 'text-primary fill-primary'
+                                                    : 'text-muted'
+                                            }`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Review Text */}
+                            <textarea
+                                value={reviewText}
+                                onChange={e => setReviewText(e.target.value)}
+                                placeholder={t('reviewPlaceholder') || 'Schreibe eine Bewertung (optional)...'}
+                                rows={3}
+                                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none mb-4"
+                            />
+
+                            <button
+                                onClick={handleRateServer}
+                                disabled={userRating === 0 || ratingLoading}
+                                className="w-full py-3 bg-primary text-primary-foreground font-medium rounded-xl hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {ratingLoading ? (
+                                    <div
+                                        className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"/>
+                                ) : (
+                                    <>
+                                        <Star className="w-5 h-5"/>
+                                        <span>{t('submitRating') || 'Bewertung abgeben'}</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Report Modal */}
+                {showReportModal && selectedServer && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div
+                            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+                            onClick={() => setShowReportModal(false)}
+                        />
+                        <div
+                            className="relative w-full max-w-md bg-card rounded-2xl border border-border shadow-2xl p-6">
+                            <button
+                                onClick={() => setShowReportModal(false)}
+                                className="absolute top-4 right-4 p-2 rounded-lg hover:bg-accent transition-colors"
+                            >
+                                <X className="w-5 h-5 text-muted-foreground"/>
+                            </button>
+
+                            <div className="text-center mb-6">
+                                <div
+                                    className="w-12 h-12 bg-destructive/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                    <Flag className="w-6 h-6 text-destructive"/>
+                                </div>
+                                <h3 className="text-xl font-semibold text-foreground">
+                                    {t('reportServer') || 'Server melden'}
+                                </h3>
+                                <p className="text-muted-foreground">{selectedServer.name}</p>
+                            </div>
+
+                            {/* Report Reasons */}
+                            <div className="space-y-2 mb-6">
+                                {[
+                                    {id: 'spam', label: t('reportSpam') || 'Spam'},
+                                    {id: 'inappropriate', label: t('reportInappropriate') || 'Unangemessener Inhalt'},
+                                    {id: 'scam', label: t('reportScam') || 'Betrug/Scam'},
+                                    {id: 'copyright', label: t('reportCopyright') || 'Urheberrechtsverletzung'},
+                                    {id: 'other', label: t('reportOther') || 'Sonstiges'}
+                                ].map(reason => (
+                                    <button
+                                        key={reason.id}
+                                        onClick={() => setReportReason(reason.id)}
+                                        className={`w-full px-4 py-3 text-left rounded-xl border transition-all ${
+                                            reportReason === reason.id
+                                                ? 'border-primary bg-primary/10 text-foreground'
+                                                : 'border-border bg-background text-muted-foreground hover:border-primary/50'
+                                        }`}
+                                    >
+                                        {reason.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleReportServer}
+                                disabled={!reportReason}
+                                className="w-full py-3 bg-destructive text-destructive-foreground font-medium rounded-xl hover:bg-destructive/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {t('submitReport') || 'Meldung absenden'}
+                            </button>
                         </div>
                     </div>
                 )}

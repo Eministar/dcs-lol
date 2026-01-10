@@ -18,13 +18,15 @@ interface EasterEggWindow extends Window {
 const easterEggs = () => {
     // Cooles ASCII-Art Banner für DCS.LOL
     console.log(
-        '%c     _                 _       _   \n' +
-        '    | |               | |     | |  \n' +
-        '  __| | ___ ___       | | ___ | |  \n' +
-        ' / _` |/ __/ __|      | |/ _ \\| |  \n' +
-        '| (_| | (__\\__ \\  _   | | (_) | |  \n' +
-        ' \\__,_|\\___|___/ (_)  |_|\\___/|_|  \n',
-        'color: #a855f7; font-weight: bold; font-size: 12px;'
+        '%c╔══════════════════════════════════════╗\n' +
+        '║     ____   ____ ____    _       _     ║\n' +
+        '║    |  _ \\ / ___/ ___|  | | ___ | |    ║\n' +
+        '║    | | | | |   \\___ \\  | |/ _ \\| |    ║\n' +
+        '║    | |_| | |___ ___) | | | (_) | |    ║\n' +
+        '║    |____/ \\____|____(_)|_|\\___/|_|    ║\n' +
+        '║                                        ║\n' +
+        '╚══════════════════════════════════════╝',
+        'color: #a855f7; font-weight: bold; font-size: 10px; font-family: monospace;'
     );
 
     console.log(

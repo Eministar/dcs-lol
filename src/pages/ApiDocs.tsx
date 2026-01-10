@@ -515,6 +515,681 @@ fetch('/api/v1/links?q=gaming&limit=10')`
     }
   }
 }`
+    },
+    // Showcase API Endpoints
+    {
+        method: "GET",
+        path: "/api/showcase",
+        description: "Get all showcase entries (featured Discord servers).",
+        descriptionDe: "Alle Showcase-Einträge (empfohlene Discord-Server) abrufen.",
+        response: `{
+  "success": true,
+  "data": [
+    {
+      "id": "abc123-uuid",
+      "name": "Gaming Hub",
+      "description": "The best gaming community",
+      "inviteLink": "dcs.lol/gaming",
+      "category": "gaming",
+      "tags": ["fps", "mmorpg", "esports"],
+      "logoUrl": "/uploads/abc123.webp",
+      "createdAt": "2026-01-01T10:00:00.000Z",
+      "featured": true,
+      "verified": true
+    }
+  ]
+}`,
+        example: `fetch('https://dcs.lol/api/showcase')
+  .then(res => res.json())
+  .then(data => console.log(data))`
+    },
+    {
+        method: "POST",
+        path: "/api/showcase",
+        description: "Submit a new server to the showcase. Requires multipart/form-data with logo image.",
+        descriptionDe: "Neuen Server zum Showcase hinzufügen. Erfordert multipart/form-data mit Logo-Bild.",
+        body: [
+            {
+                name: "name",
+                type: "string",
+                required: true,
+                description: "Server name (max 255 chars)",
+                descriptionDe: "Server-Name (max. 255 Zeichen)"
+            },
+            {
+                name: "description",
+                type: "string",
+                required: true,
+                description: "Server description",
+                descriptionDe: "Server-Beschreibung"
+            },
+            {
+                name: "inviteLink",
+                type: "string",
+                required: true,
+                description: "DCS.lol link (format: dcs.lol/yourlink)",
+                descriptionDe: "DCS.lol-Link (Format: dcs.lol/deinlink)"
+            },
+            {
+                name: "category",
+                type: "string",
+                required: true,
+                description: "Category (gaming, community, music, art, tech, education, other)",
+                descriptionDe: "Kategorie (gaming, community, music, art, tech, education, other)"
+            },
+            {
+                name: "tags",
+                type: "string[]",
+                required: false,
+                description: "Tags (max 5, JSON array or comma-separated)",
+                descriptionDe: "Tags (max. 5, JSON-Array oder kommagetrennt)"
+            },
+            {
+                name: "logo",
+                type: "file",
+                required: true,
+                description: "Logo image (PNG, JPEG, WebP, max 5MB)",
+                descriptionDe: "Logo-Bild (PNG, JPEG, WebP, max. 5MB)"
+            }
+        ],
+        response: `{
+  "success": true,
+  "data": {
+    "id": "new-uuid",
+    "name": "My Server",
+    "description": "Description...",
+    "inviteLink": "dcs.lol/myserver",
+    "category": "gaming",
+    "tags": ["tag1", "tag2"],
+    "logoUrl": "/uploads/new-uuid.webp",
+    "createdAt": "2026-01-09T12:00:00.000Z",
+    "featured": false,
+    "verified": false
+  }
+}`,
+        example: `const formData = new FormData();
+formData.append('name', 'My Gaming Server');
+formData.append('description', 'The best gaming community!');
+formData.append('inviteLink', 'dcs.lol/mygaming');
+formData.append('category', 'gaming');
+formData.append('tags', JSON.stringify(['fps', 'esports']));
+formData.append('logo', logoFile);
+
+fetch('https://dcs.lol/api/showcase', {
+  method: 'POST',
+  body: formData
+})`
+    },
+    // Webhooks API
+    {
+        method: "GET",
+        path: "/api/webhooks",
+        description: "Get all configured webhooks.",
+        descriptionDe: "Alle konfigurierten Webhooks abrufen.",
+        response: `{
+  "success": true,
+  "data": [
+    {
+      "id": "1704800000000",
+      "name": "My Discord Webhook",
+      "url": "https://discord.com/api/webhooks/...",
+      "totalCalls": 150,
+      "lastTriggered": "2026-01-09T12:00:00.000Z"
+    }
+  ]
+}`
+    },
+    {
+        method: "POST",
+        path: "/api/webhooks",
+        description: "Create a new webhook for event notifications.",
+        descriptionDe: "Neuen Webhook für Event-Benachrichtigungen erstellen.",
+        body: [
+            {
+                name: "name",
+                type: "string",
+                required: true,
+                description: "Webhook name",
+                descriptionDe: "Webhook-Name"
+            },
+            {
+                name: "url",
+                type: "string",
+                required: true,
+                description: "Webhook URL (Discord, Slack, etc.)",
+                descriptionDe: "Webhook-URL (Discord, Slack, etc.)"
+            }
+        ],
+        response: `{
+  "success": true,
+  "data": {
+    "id": "1704800000000",
+    "name": "My Webhook",
+    "url": "https://...",
+    "totalCalls": 0
+  }
+}`
+    },
+    {
+        method: "POST",
+        path: "/api/webhooks/:id/test",
+        description: "Send a test message to a webhook.",
+        descriptionDe: "Testnachricht an einen Webhook senden.",
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Webhook ID",
+                descriptionDe: "Webhook-ID"
+            }
+        ],
+        response: `{
+  "success": true,
+  "status": 200
+}`
+    },
+    {
+        method: "DELETE",
+        path: "/api/webhooks/:id",
+        description: "Delete a webhook.",
+        descriptionDe: "Einen Webhook löschen.",
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Webhook ID to delete",
+                descriptionDe: "Zu löschende Webhook-ID"
+            }
+        ],
+        response: `{
+  "success": true
+}`
+    },
+    // User/Auth APIs
+    {
+        method: "GET",
+        path: "/api/me",
+        description: "Get current authenticated user info.",
+        descriptionDe: "Aktuelle authentifizierte Benutzerinfo abrufen.",
+        response: `{
+  "user": {
+    "id": 1,
+    "username": "DiscordUser",
+    "avatar": "https://cdn.discordapp.com/avatars/..."
+  }
+}`,
+        example: `// Returns null if not logged in
+fetch('https://dcs.lol/api/me', { credentials: 'include' })
+  .then(res => res.json())
+  .then(data => {
+    if (data.user) {
+      console.log('Logged in as:', data.user.username);
+    }
+  })`
+    },
+    {
+        method: "GET",
+        path: "/api/my/links",
+        description: "Get all links created by the authenticated user.",
+        descriptionDe: "Alle Links des eingeloggten Benutzers abrufen.",
+        auth: true,
+        response: `{
+  "items": [
+    {
+      "id": "mylink",
+      "originalUrl": "https://discord.gg/abc123",
+      "shortUrl": "https://dcs.lol/mylink",
+      "clicks": 100,
+      "createdAt": "2026-01-01T10:00:00.000Z"
+    }
+  ]
+}`
+    },
+    {
+        method: "PATCH",
+        path: "/api/my/links/:id",
+        description: "Update one of your own links.",
+        descriptionDe: "Einen eigenen Link aktualisieren.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Current link ID",
+                descriptionDe: "Aktuelle Link-ID"
+            }
+        ],
+        body: [
+            {
+                name: "originalUrl",
+                type: "string",
+                required: false,
+                description: "New Discord URL",
+                descriptionDe: "Neue Discord-URL"
+            },
+            {
+                name: "newCustomId",
+                type: "string",
+                required: false,
+                description: "New custom ID",
+                descriptionDe: "Neue benutzerdefinierte ID"
+            }
+        ],
+        response: `{
+  "ok": true
+}`
+    },
+    {
+        method: "DELETE",
+        path: "/api/my/links/:id",
+        description: "Delete one of your own links.",
+        descriptionDe: "Einen eigenen Link löschen.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Link ID to delete",
+                descriptionDe: "Zu löschende Link-ID"
+            }
+        ],
+        response: `{
+  "ok": true
+}`
+    },
+    // Health & Utility
+    {
+        method: "GET",
+        path: "/health",
+        description: "Health check endpoint for monitoring.",
+        descriptionDe: "Health-Check-Endpoint für Monitoring.",
+        response: `{
+  "status": "ok"
+}`
+    },
+    {
+        method: "GET",
+        path: "/api/info/:id",
+        description: "Get Discord server info for a shortened link (proxied, CSP-friendly).",
+        descriptionDe: "Discord-Server-Info für einen gekürzten Link abrufen (proxied, CSP-freundlich).",
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "The short link ID",
+                descriptionDe: "Die Kurzlink-ID"
+            }
+        ],
+        response: `{
+  "name": "My Awesome Server",
+  "icon": "https://dcs.lol/proxy/discord/icons/123/abc",
+  "inviteCode": "myserver",
+  "originalUrl": "https://discord.gg/abc123"
+}`,
+        example: `// Get server preview before redirecting
+fetch('https://dcs.lol/api/info/myserver')
+  .then(res => res.json())
+  .then(data => {
+    console.log('Server:', data.name);
+    console.log('Icon:', data.icon);
+  })`
+    },
+    {
+        method: "GET",
+        path: "/api/recents",
+        description: "Get the most recently created links.",
+        descriptionDe: "Die zuletzt erstellten Links abrufen.",
+        queryParams: [
+            {
+                name: "limit",
+                type: "number",
+                required: false,
+                description: "Number of results (1-100, default: 9)",
+                descriptionDe: "Anzahl Ergebnisse (1-100, Standard: 9)"
+            }
+        ],
+        response: `{
+  "success": true,
+  "data": [
+    {
+      "id": "newlink",
+      "originalUrl": "https://discord.gg/...",
+      "shortUrl": "https://dcs.lol/newlink",
+      "clicks": 5,
+      "createdAt": "2026-01-09T12:00:00.000Z"
+    }
+  ]
+}`
+    },
+    // Discord Icon Proxy
+    {
+        method: "GET",
+        path: "/proxy/discord/icons/:guildId/:icon",
+        description: "Proxy Discord server icons (CSP-friendly, cached).",
+        descriptionDe: "Discord-Server-Icons proxyen (CSP-freundlich, gecached).",
+        params: [
+            {
+                name: "guildId",
+                type: "string",
+                required: true,
+                description: "Discord server/guild ID",
+                descriptionDe: "Discord-Server/Guild-ID"
+            },
+            {
+                name: "icon",
+                type: "string",
+                required: true,
+                description: "Icon hash from Discord API",
+                descriptionDe: "Icon-Hash von der Discord API"
+            }
+        ],
+        queryParams: [
+            {
+                name: "size",
+                type: "number",
+                required: false,
+                description: "Image size (16-256, default: 128)",
+                descriptionDe: "Bildgröße (16-256, Standard: 128)"
+            }
+        ],
+        response: `// Returns image/png or image/gif binary data
+// Cached for 24 hours
+// Falls back to SVG placeholder if not found`,
+        example: `// Use in img src
+<img src="https://dcs.lol/proxy/discord/icons/123456/abc123?size=64" alt="Server Icon" />`
+    },
+    // Showcase Rating & Social Features
+    {
+        method: "GET",
+        path: "/api/showcase/:id",
+        description: "Get detailed info about a specific showcase server including ratings and reviews.",
+        descriptionDe: "Detaillierte Infos zu einem Showcase-Server inkl. Bewertungen und Reviews abrufen.",
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        response: `{
+  "id": "abc123-uuid",
+  "name": "Gaming Hub",
+  "description": "The best gaming community",
+  "inviteLink": "dcs.lol/gaming",
+  "category": "Gaming",
+  "tags": ["fps", "mmorpg"],
+  "logoUrl": "/uploads/abc123.webp",
+  "avgRating": 4.5,
+  "ratingCount": 25,
+  "favoriteCount": 100,
+  "views": 1500,
+  "reviews": [
+    {
+      "id": 1,
+      "rating": 5,
+      "review": "Great server!",
+      "username": "User123",
+      "createdAt": "2026-01-09T12:00:00.000Z"
+    }
+  ],
+  "userRating": { "rating": 5, "review": "..." },
+  "userFavorited": true
+}`
+    },
+    {
+        method: "POST",
+        path: "/api/showcase/:id/rate",
+        description: "Rate a showcase server (1-5 stars). Requires authentication.",
+        descriptionDe: "Einen Showcase-Server bewerten (1-5 Sterne). Erfordert Authentifizierung.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        body: [
+            {
+                name: "rating",
+                type: "number",
+                required: true,
+                description: "Rating (1-5)",
+                descriptionDe: "Bewertung (1-5)"
+            },
+            {
+                name: "review",
+                type: "string",
+                required: false,
+                description: "Optional review text",
+                descriptionDe: "Optionaler Bewertungstext"
+            }
+        ],
+        response: `{
+  "success": true,
+  "avgRating": 4.5,
+  "ratingCount": 26
+}`,
+        example: `fetch('/api/showcase/abc123/rate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({ rating: 5, review: 'Amazing server!' })
+})`
+    },
+    {
+        method: "DELETE",
+        path: "/api/showcase/:id/rate",
+        description: "Remove your rating from a showcase server.",
+        descriptionDe: "Deine Bewertung von einem Showcase-Server entfernen.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        response: `{ "success": true }`
+    },
+    {
+        method: "GET",
+        path: "/api/showcase/:id/reviews",
+        description: "Get paginated reviews for a showcase server.",
+        descriptionDe: "Paginierte Reviews für einen Showcase-Server abrufen.",
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        queryParams: [
+            {
+                name: "page",
+                type: "number",
+                required: false,
+                description: "Page number (default: 1)",
+                descriptionDe: "Seitennummer (Standard: 1)"
+            },
+            {
+                name: "limit",
+                type: "number",
+                required: false,
+                description: "Reviews per page (max 100)",
+                descriptionDe: "Reviews pro Seite (max. 100)"
+            }
+        ],
+        response: `{
+  "reviews": [...],
+  "total": 50,
+  "page": 1,
+  "limit": 20
+}`
+    },
+    {
+        method: "POST",
+        path: "/api/showcase/:id/favorite",
+        description: "Toggle favorite status for a showcase server. Requires authentication.",
+        descriptionDe: "Favoriten-Status für einen Showcase-Server umschalten. Erfordert Authentifizierung.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        response: `{ "favorited": true }`
+    },
+    {
+        method: "GET",
+        path: "/api/favorites",
+        description: "Get all favorited showcase servers for the authenticated user.",
+        descriptionDe: "Alle favorisierten Showcase-Server des eingeloggten Benutzers abrufen.",
+        auth: true,
+        response: `[
+  {
+    "id": "abc123",
+    "name": "Gaming Hub",
+    "avgRating": 4.5,
+    ...
+  }
+]`
+    },
+    {
+        method: "POST",
+        path: "/api/showcase/:id/report",
+        description: "Report a showcase server for inappropriate content.",
+        descriptionDe: "Einen Showcase-Server wegen unangemessenen Inhalts melden.",
+        auth: true,
+        params: [
+            {
+                name: "id",
+                type: "string",
+                required: true,
+                description: "Showcase entry ID",
+                descriptionDe: "Showcase-Eintrags-ID"
+            }
+        ],
+        body: [
+            {
+                name: "reason",
+                type: "string",
+                required: true,
+                description: "Reason (spam, inappropriate, scam, copyright, other)",
+                descriptionDe: "Grund (spam, inappropriate, scam, copyright, other)"
+            },
+            {
+                name: "details",
+                type: "string",
+                required: false,
+                description: "Additional details",
+                descriptionDe: "Weitere Details"
+            }
+        ],
+        response: `{ "success": true, "message": "Thank you for your report!" }`
+    },
+    {
+        method: "GET",
+        path: "/api/search",
+        description: "Search showcase servers by name, description, category, or tags.",
+        descriptionDe: "Showcase-Server nach Name, Beschreibung, Kategorie oder Tags suchen.",
+        queryParams: [
+            {name: "q", type: "string", required: false, description: "Search query", descriptionDe: "Suchbegriff"},
+            {
+                name: "category",
+                type: "string",
+                required: false,
+                description: "Filter by category",
+                descriptionDe: "Nach Kategorie filtern"
+            },
+            {
+                name: "tag",
+                type: "string",
+                required: false,
+                description: "Filter by tag",
+                descriptionDe: "Nach Tag filtern"
+            },
+            {
+                name: "sort",
+                type: "string",
+                required: false,
+                description: "Sort by: rating, views, favorites, newest",
+                descriptionDe: "Sortieren nach: rating, views, favorites, newest"
+            },
+            {name: "page", type: "number", required: false, description: "Page number", descriptionDe: "Seitennummer"},
+            {
+                name: "limit",
+                type: "number",
+                required: false,
+                description: "Results per page (max 50)",
+                descriptionDe: "Ergebnisse pro Seite (max. 50)"
+            }
+        ],
+        response: `{
+  "servers": [...],
+  "page": 1,
+  "limit": 20
+}`,
+        example: `// Search gaming servers sorted by rating
+fetch('/api/search?q=gaming&category=Gaming&sort=rating')`
+    },
+    {
+        method: "GET",
+        path: "/api/top",
+        description: "Get top-rated showcase servers.",
+        descriptionDe: "Die bestbewerteten Showcase-Server abrufen.",
+        queryParams: [
+            {
+                name: "limit",
+                type: "number",
+                required: false,
+                description: "Number of results (max 50)",
+                descriptionDe: "Anzahl Ergebnisse (max. 50)"
+            }
+        ],
+        response: `[
+  {
+    "id": "abc123",
+    "name": "Top Server",
+    "avgRating": 4.9,
+    "ratingCount": 100,
+    ...
+  }
+]`
+    },
+    {
+        method: "GET",
+        path: "/api/showcase-stats",
+        description: "Get global showcase statistics.",
+        descriptionDe: "Globale Showcase-Statistiken abrufen.",
+        response: `{
+  "totalServers": 150,
+  "totalRatings": 2500,
+  "totalFavorites": 5000,
+  "totalViews": 100000,
+  "averageRating": 4.2,
+  "categories": [
+    { "category": "Gaming", "count": 50 },
+    { "category": "Community", "count": 30 }
+  ]
+}`
     }
 ];
 
@@ -605,6 +1280,54 @@ export default function ApiDocs() {
                             className="px-4 py-2 rounded-xl bg-accent/10 border border-accent/20 text-accent">
                             ✓ JSON {isDE ? "Antworten" : "Responses"}
                         </div>
+                    </div>
+                </div>
+
+                {/* API Categories Overview */}
+                <div className="mb-16 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div
+                        className="p-5 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3">
+                            <span className="text-emerald-400 text-lg">🔗</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground mb-1">{isDE ? "Links API" : "Links API"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            {isDE ? "Links erstellen, abrufen, aktualisieren und löschen" : "Create, read, update and delete links"}
+                        </p>
+                        <span className="text-xs text-primary mt-2 block">10 Endpoints</span>
+                    </div>
+                    <div
+                        className="p-5 rounded-2xl bg-card border border-border hover:border-accent/30 transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center mb-3">
+                            <span className="text-violet-400 text-lg">🏆</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground mb-1">{isDE ? "Showcase API" : "Showcase API"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            {isDE ? "Server-Showcase Einträge verwalten" : "Manage server showcase entries"}
+                        </p>
+                        <span className="text-xs text-accent mt-2 block">2 Endpoints</span>
+                    </div>
+                    <div
+                        className="p-5 rounded-2xl bg-card border border-border hover:border-blue-500/30 transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
+                            <span className="text-blue-400 text-lg">🔔</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground mb-1">{isDE ? "Webhooks API" : "Webhooks API"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            {isDE ? "Event-Benachrichtigungen einrichten" : "Set up event notifications"}
+                        </p>
+                        <span className="text-xs text-blue-400 mt-2 block">4 Endpoints</span>
+                    </div>
+                    <div
+                        className="p-5 rounded-2xl bg-card border border-border hover:border-amber-500/30 transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center mb-3">
+                            <span className="text-amber-400 text-lg">👤</span>
+                        </div>
+                        <h3 className="font-semibold text-foreground mb-1">{isDE ? "User API" : "User API"}</h3>
+                        <p className="text-sm text-muted-foreground">
+                            {isDE ? "Benutzer-Authentifizierung & eigene Links" : "User authentication & personal links"}
+                        </p>
+                        <span className="text-xs text-amber-400 mt-2 block">4 Endpoints</span>
                     </div>
                 </div>
 
@@ -1066,6 +1789,70 @@ Powered by [DCS.lol API](https://dcs.lol)`}
                                 : "Violation of these terms may result in API access being revoked. For questions, contact us on Discord."}
                         </p>
                     </div>
+                </div>
+
+                {/* Webhook Events */}
+                <div className="mt-16 p-6 rounded-2xl bg-blue-500/5 border border-blue-500/20">
+                    <h2 className="text-2xl font-semibold mb-4 text-blue-400">
+                        {isDE ? "Webhook Events" : "Webhook Events"}
+                    </h2>
+                    <p className="text-muted-foreground mb-6">
+                        {isDE
+                            ? "Wenn du Webhooks konfigurierst, werden folgende Events automatisch gesendet:"
+                            : "When you configure webhooks, the following events are automatically sent:"}
+                    </p>
+                    <div className="space-y-4">
+                        <div className="p-4 rounded-xl bg-background border border-border">
+                            <div className="flex items-center gap-3 mb-3">
+                                <span
+                                    className="px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-mono border border-emerald-500/30">
+                                    link.created
+                                </span>
+                                <span className="text-muted-foreground text-sm">
+                                    {isDE ? "Wird gesendet, wenn ein neuer Link erstellt wird" : "Sent when a new link is created"}
+                                </span>
+                            </div>
+                            <pre className="text-sm font-mono text-foreground/80 overflow-x-auto">
+{`{
+  "type": "link.created",
+  "timestamp": "2026-01-09T12:00:00.000Z",
+  "payload": {
+    "id": "myserver",
+    "originalUrl": "https://discord.gg/abc123",
+    "shortUrl": "https://dcs.lol/myserver",
+    "clicks": 0,
+    "createdAt": "2026-01-09T12:00:00.000Z"
+  }
+}`}
+                            </pre>
+                        </div>
+                        <div className="p-4 rounded-xl bg-background border border-border">
+                            <div className="flex items-center gap-3 mb-3">
+                                <span
+                                    className="px-2 py-1 rounded-lg bg-violet-500/20 text-violet-400 text-xs font-mono border border-violet-500/30">
+                                    link.clicked
+                                </span>
+                                <span className="text-muted-foreground text-sm">
+                                    {isDE ? "Wird gesendet, wenn ein Link geklickt wird" : "Sent when a link is clicked"}
+                                </span>
+                            </div>
+                            <pre className="text-sm font-mono text-foreground/80 overflow-x-auto">
+{`{
+  "type": "link.clicked",
+  "timestamp": "2026-01-09T12:01:00.000Z",
+  "payload": {
+    "id": "myserver",
+    "at": "2026-01-09T12:01:00.000Z"
+  }
+}`}
+                            </pre>
+                        </div>
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-4">
+                        {isDE
+                            ? "Webhooks werden als POST-Anfragen mit Content-Type: application/json gesendet."
+                            : "Webhooks are sent as POST requests with Content-Type: application/json."}
+                    </p>
                 </div>
 
                 {/* Error Handling */}
